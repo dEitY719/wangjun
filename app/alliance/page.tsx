@@ -8,7 +8,7 @@ const TABS: Kingdom[] = ['위', '촉', '오']
 
 const TAB_COLOR: Record<Kingdom, { accent: string; dim: string }> = {
   위: { accent: '#7eb3e0', dim: '#1e3a5f' },
-  촉: { accent: '#c9a94b', dim: '#4a3a10' },
+  촉: { accent: '#4caf7d', dim: '#0f3320' },
   오: { accent: '#e07e7e', dim: '#5f1e1e' },
 }
 
