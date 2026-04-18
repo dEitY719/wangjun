@@ -28,7 +28,18 @@ const CHUK: Alliance[] = [
 ]
 
 /* ───── 오 데이터 ───── */
-const O_ALLIANCES = ['은하수', '(준비중)', '(준비중)']
+type OAlliance = {
+  rank: number
+  name: string
+  leader: string
+  viceLeaders?: string[]
+}
+
+const O: OAlliance[] = [
+  { rank: 1, name: '은하수', leader: '뽀꽁', viceLeaders: ['교라니', '공명', '뱅쇼', '정형돈'] },
+  { rank: 2, name: '', leader: '' },
+  { rank: 3, name: '', leader: '' },
+]
 
 function AllianceCard({ a, accentColor, dimColor }: { a: Alliance; accentColor: string; dimColor: string }) {
   return (
@@ -110,18 +121,31 @@ export default function AlliancePage() {
       {/* 오 */}
       {tab === '오' && (
         <div className="space-y-3">
-          {O_ALLIANCES.map((name, i) => (
-            <div key={i} className="card p-4" style={{ borderColor: accent + '55' }}>
-              <div className="flex items-center gap-2">
+          {O.map((a) => (
+            <div key={a.rank} className="card p-4" style={{ borderColor: accent + '55' }}>
+              <div className="flex items-center gap-2 mb-2">
                 <span className="text-xs font-bold px-2 py-0.5 rounded-full"
                   style={{ background: dim, color: accent, border: `1px solid ${accent}` }}>
-                  {i + 1}맹
+                  {a.rank}맹
                 </span>
-                <span className={`font-bold text-base ${name.startsWith('(') ? '' : ''}`}
-                  style={{ color: name.startsWith('(') ? 'var(--text-muted)' : 'white' }}>
-                  {name}
+                <span className="font-bold text-base" style={{ color: a.name ? 'white' : 'var(--text-muted)' }}>
+                  {a.name || '(준비중)'}
                 </span>
               </div>
+              {a.name && (
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm" style={{ color: 'var(--text-muted)' }}>
+                  <span>
+                    <span className="text-xs mr-1" style={{ color: accent }}>맹주</span>
+                    <span className="text-white font-medium">{a.leader}</span>
+                  </span>
+                  {a.viceLeaders && a.viceLeaders.length > 0 && (
+                    <span>
+                      <span className="text-xs mr-1" style={{ color: accent }}>부맹주</span>
+                      <span className="text-white font-medium">{a.viceLeaders.join(', ')}</span>
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>
