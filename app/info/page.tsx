@@ -7,11 +7,11 @@ type InfoTab = '지도' | '관청Lv'
 const TABS: InfoTab[] = ['지도', '관청Lv']
 
 const OFFICE_LEVELS = [
-  { from: 26, to: 27, requirements: ['군의당', '창병영', '농지'] },
-  { from: 27, to: 28, requirements: ['군의당', '궁병영', '벌목장'] },
-  { from: 28, to: 29, requirements: ['군의당', '방패병영', '채석장', '수학소'] },
-  { from: 29, to: 30, requirements: ['군의당', '의원', '각루'] },
-  { from: 30, to: 31, requirements: ['군의당', '기병영', '창고'] },
+  { level: 26, requirements: ['군의당', '창병영', '농지'] },
+  { level: 27, requirements: ['군의당', '궁병영', '벌목장'] },
+  { level: 28, requirements: ['군의당', '방패병영', '채석장', '수학소'] },
+  { level: 29, requirements: ['군의당', '의원', '각루'] },
+  { level: 30, requirements: ['군의당', '기병영', '창고'] },
 ]
 
 export default function InfoPage() {
@@ -54,25 +54,21 @@ export default function InfoPage() {
       {tab === '관청Lv' && (
         <div>
           <p className="text-xs mb-4 px-1" style={{ color: 'var(--text-muted)' }}>
-            관청 레벨 승급 시 사전 필요 건물 목록입니다.
+            관청 N레벨 달성 조건 — 해당 건물들이 모두 <span style={{ color: 'var(--accent)' }}>N-1레벨</span> 이상이어야 합니다.
           </p>
           <div className="space-y-2">
-            {OFFICE_LEVELS.map(({ from, to, requirements }) => (
-              <div key={from} className="card p-4 flex items-center gap-4">
-                {/* 레벨 표시 */}
-                <div className="shrink-0 text-center w-20">
-                  <div className="flex items-center justify-center gap-1">
-                    <span className="text-base font-bold" style={{ color: 'var(--accent)' }}>{from}</span>
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>→</span>
-                    <span className="text-base font-bold text-white">{to}</span>
-                  </div>
-                  <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>관청</div>
+            {OFFICE_LEVELS.map(({ level, requirements }) => (
+              <div key={level} className="card p-4 flex items-center gap-4">
+                {/* 관청 레벨 */}
+                <div className="shrink-0 text-center w-16">
+                  <div className="text-lg font-bold" style={{ color: 'var(--accent)' }}>{level}</div>
+                  <div className="text-xs" style={{ color: 'var(--text-muted)' }}>관청</div>
                 </div>
 
                 {/* 구분선 */}
                 <div className="w-px self-stretch" style={{ background: 'var(--border)' }} />
 
-                {/* 필요 건물 */}
+                {/* 필요 건물 (모두 level-1) */}
                 <div className="flex flex-wrap gap-2">
                   {requirements.map((req) => (
                     <span
@@ -84,7 +80,7 @@ export default function InfoPage() {
                         border: `1px solid ${req === '군의당' ? 'var(--border)' : 'var(--accent)'}`,
                       }}
                     >
-                      {req}
+                      {req} {level - 1}
                     </span>
                   ))}
                 </div>
