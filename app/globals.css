@@ -74,7 +74,107 @@ body {
 }
 
 .notice-content {
-  white-space: pre-wrap;
   line-height: 1.9;
   font-size: 1.05rem;
+}
+
+/* 마크다운 렌더링 스타일 */
+.notice-content h1,
+.notice-content h2,
+.notice-content h3 {
+  font-weight: 700;
+  margin-top: 1.2em;
+  margin-bottom: 0.4em;
+  color: var(--accent);
+}
+.notice-content h1 { font-size: 1.3rem; }
+.notice-content h2 { font-size: 1.15rem; }
+.notice-content h3 { font-size: 1.05rem; }
+
+.notice-content p {
+  margin-bottom: 0.8em;
+}
+
+.notice-content strong {
+  color: #f0e6c8;
+  font-weight: 700;
+}
+
+.notice-content em {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.notice-content del {
+  opacity: 0.5;
+}
+
+.notice-content ul,
+.notice-content ol {
+  padding-left: 1.4em;
+  margin-bottom: 0.8em;
+}
+.notice-content ul { list-style: disc; }
+.notice-content ol { list-style: decimal; }
+
+.notice-content li {
+  margin-bottom: 0.25em;
+}
+
+.notice-content blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 1em;
+  margin: 0.8em 0;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.notice-content code {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+  font-size: 0.9em;
+  font-family: monospace;
+  color: #e0c070;
+}
+
+.notice-content pre {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1em;
+  overflow-x: auto;
+  margin-bottom: 0.8em;
+}
+.notice-content pre code {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.notice-content hr {
+  border-color: var(--border);
+  margin: 1em 0;
+}
+
+.notice-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0.8em;
+  font-size: 0.95rem;
+}
+.notice-content th,
+.notice-content td {
+  border: 1px solid var(--border);
+  padding: 0.4em 0.8em;
+  text-align: left;
+}
+.notice-content th {
+  background: var(--surface2);
+  color: var(--accent);
+  font-weight: 600;
+}
+.notice-content tr:nth-child(even) td {
+  background: rgba(255,255,255,0.02);
 }

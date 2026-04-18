@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import type { Notice } from '@/lib/supabase'
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -29,6 +31,7 @@ export default function AdminPage() {
   const [isPinned, setIsPinned] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitMsg, setSubmitMsg] = useState('')
+  const [editorTab, setEditorTab] = useState<'write' | 'preview'>('write')
 
   const fetchNotices = useCallback(async () => {
     setLoading(true)
@@ -40,18 +43,9 @@ export default function AdminPage() {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
-    const res = await fetch('/api/notices', {
-      headers: { 'x-admin-password': password },
-    })
-    if (res.ok || res.status === 200) {
-      setAuthed(true)
-      setAuthError('')
-      fetchNotices()
-    } else {
-      // 실제로는 GET은 항상 200이므로 비밀번호를 세션에만 저장하고 POST 실패 시 처리
-      setAuthed(true)
-      fetchNotices()
-    }
+    setAuthed(true)
+    setAuthError('')
+    fetchNotices()
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,6 +71,7 @@ export default function AdminPage() {
       setContent('')
       setCategory('notice')
       setIsPinned(false)
+      setEditorTab('write')
       setSubmitMsg('✅ 공지가 등록되었습니다!')
       fetchNotices()
     } else if (res.status === 401) {
@@ -109,11 +104,8 @@ export default function AdminPage() {
               placeholder="관리자 비밀번호"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg text-white outline-none focus:ring-2"
-              style={{
-                background: 'var(--surface2)',
-                border: '1px solid var(--border)',
-              }}
+              className="w-full px-4 py-3 rounded-lg text-white outline-none"
+              style={{ background: 'var(--surface2)', border: '1px solid var(--border)' }}
             />
             {authError && <p className="text-red-400 text-sm">{authError}</p>}
             <button type="submit" className="btn-primary w-full py-3">
@@ -127,7 +119,6 @@ export default function AdminPage() {
 
   return (
     <div className="space-y-6">
-      {/* 작성 폼 */}
       <div className="card p-5">
         <h2 className="font-bold text-lg mb-4" style={{ color: 'var(--accent)' }}>📝 공지 작성</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -167,19 +158,50 @@ export default function AdminPage() {
             style={{ background: 'var(--surface2)', border: '1px solid var(--border)' }}
           />
 
-          {/* 본문 */}
-          <textarea
-            placeholder="내용을 입력하세요 (5~10줄 권장)"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={8}
-            className="w-full px-4 py-3 rounded-lg text-white outline-none resize-none"
-            style={{ background: 'var(--surface2)', border: '1px solid var(--border)', lineHeight: '1.8' }}
-          />
+          {/* 작성 / 미리보기 탭 */}
+          <div>
+            <div className="flex gap-1 mb-2">
+              {(['write', 'preview'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setEditorTab(tab)}
+                  className="text-xs px-3 py-1.5 rounded-md font-medium transition-colors"
+                  style={{
+                    background: editorTab === tab ? 'var(--accent)' : 'var(--surface2)',
+                    color: editorTab === tab ? '#0f1117' : 'var(--text-muted)',
+                    border: '1px solid var(--border)',
+                  }}
+                >
+                  {tab === 'write' ? '✏️ 작성' : '👁 미리보기'}
+                </button>
+              ))}
+              <span className="ml-auto text-xs self-center" style={{ color: 'var(--text-muted)' }}>
+                {content.length}자 / {content.split('\n').length}줄
+              </span>
+            </div>
 
-          {/* 미리보기 글자수 */}
-          <div className="text-xs text-right" style={{ color: 'var(--text-muted)' }}>
-            {content.length}자 / {content.split('\n').length}줄
+            {editorTab === 'write' ? (
+              <textarea
+                placeholder={`마크다운 문법 지원\n\n**굵게**, *기울임*, ~~취소선~~\n# 제목, ## 소제목\n- 목록 항목\n1. 번호 목록\n> 인용구\n\`코드\``}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                rows={10}
+                className="w-full px-4 py-3 rounded-lg text-white outline-none resize-none font-mono text-sm"
+                style={{ background: 'var(--surface2)', border: '1px solid var(--border)', lineHeight: '1.7' }}
+              />
+            ) : (
+              <div
+                className="w-full px-4 py-3 rounded-lg min-h-[240px] notice-content"
+                style={{ background: 'var(--surface2)', border: '1px solid var(--border)' }}
+              >
+                {content.trim() ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+                ) : (
+                  <span style={{ color: 'var(--text-muted)' }}>내용을 입력하면 미리보기가 표시됩니다.</span>
+                )}
+              </div>
+            )}
           </div>
 
           {submitMsg && (

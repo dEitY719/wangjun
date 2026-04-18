@@ -1,6 +1,8 @@
 'use client'
 
 import Link from 'next/link'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import type { Notice } from '@/lib/supabase'
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -28,14 +30,12 @@ async function copyUrl() {
 export default function NoticeDetail({ notice }: { notice: Notice }) {
   return (
     <div>
-      {/* 뒤로가기 */}
       <Link href="/" className="inline-flex items-center gap-1 text-sm mb-5 transition-colors"
         style={{ color: 'var(--text-muted)' }}>
         ← 목록으로
       </Link>
 
       <div className="card p-5">
-        {/* 카테고리 + 고정 */}
         <div className="flex items-center gap-2 mb-3 flex-wrap">
           {notice.is_pinned && (
             <span className="text-xs px-2 py-1 rounded-full font-semibold"
@@ -48,23 +48,22 @@ export default function NoticeDetail({ notice }: { notice: Notice }) {
           </span>
         </div>
 
-        {/* 제목 */}
         <h1 className="text-xl font-bold leading-snug mb-2">{notice.title}</h1>
 
-        {/* 날짜 */}
         <p className="text-xs mb-5" style={{ color: 'var(--text-muted)' }}>
           {formatDate(notice.created_at)}
         </p>
 
-        {/* 구분선 */}
         <hr style={{ borderColor: 'var(--border)' }} className="mb-5" />
 
-        {/* 본문 */}
-        <div className="notice-content">{notice.content}</div>
+        <div className="notice-content">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {notice.content}
+          </ReactMarkdown>
+        </div>
       </div>
 
-      {/* 공유 버튼 영역 */}
-      <div className="mt-5 space-y-3">
+      <div className="mt-5">
         <button
           onClick={copyUrl}
           className="w-full btn-primary text-center py-3 text-sm"
