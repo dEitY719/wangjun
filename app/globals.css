@@ -1,26 +1,80 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #22263a;
+  --border: #2e3350;
+  --text: #e8eaf6;
+  --text-muted: #8892b0;
+  --accent: #c9a94b;
+  --accent-dim: #9a7a2e;
+  --urgent: #e05c5c;
+  --urgent-dim: #7a2e2e;
+  --notice: #4b7ec9;
+  --notice-dim: #2e4a7a;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.badge-urgent {
+  background: var(--urgent-dim);
+  color: var(--urgent);
+  border: 1px solid var(--urgent);
+}
+
+.badge-notice {
+  background: var(--notice-dim);
+  color: var(--notice);
+  border: 1px solid var(--notice);
+}
+
+.badge-general {
+  background: var(--surface2);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #0f1117;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 10px 20px;
+  transition: opacity 0.15s;
+}
+
+.btn-primary:hover {
+  opacity: 0.85;
+}
+
+.btn-danger {
+  background: var(--urgent-dim);
+  color: var(--urgent);
+  border: 1px solid var(--urgent);
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 8px 16px;
+  transition: opacity 0.15s;
+}
+
+.btn-danger:hover {
+  opacity: 0.8;
+}
+
+.notice-content {
+  white-space: pre-wrap;
+  line-height: 1.9;
+  font-size: 1.05rem;
 }
