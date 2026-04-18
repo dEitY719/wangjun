@@ -43,9 +43,18 @@ export default function AdminPage() {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
-    setAuthed(true)
-    setAuthError('')
-    fetchNotices()
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    })
+    if (res.ok) {
+      setAuthed(true)
+      setAuthError('')
+      fetchNotices()
+    } else {
+      setAuthError('비밀번호가 틀렸습니다')
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -120,7 +129,19 @@ export default function AdminPage() {
   return (
     <div className="space-y-6">
       <div className="card p-5">
-        <h2 className="font-bold text-lg mb-4" style={{ color: 'var(--accent)' }}>📝 공지 작성</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-bold text-lg" style={{ color: 'var(--accent)' }}>📝 공지 작성</h2>
+          <div className="flex items-center gap-2">
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>비밀번호</span>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-28 px-2 py-1 rounded text-white text-xs outline-none"
+              style={{ background: 'var(--surface2)', border: '1px solid var(--border)' }}
+            />
+          </div>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* 카테고리 + 고정 */}
           <div className="flex gap-3 flex-wrap">
