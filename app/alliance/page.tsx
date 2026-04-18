@@ -37,8 +37,9 @@ type OAlliance = {
 
 const O: OAlliance[] = [
   { rank: 1, name: '은하수', leader: '뽀꽁', viceLeaders: ['교라니', '공명', '뱅쇼', '정형돈'] },
-  { rank: 2, name: '', leader: '' },
-  { rank: 3, name: '', leader: '' },
+  { rank: 2, name: '향', leader: '' },
+  { rank: 3, name: 'kor', leader: '' },
+  { rank: 4, name: '환', leader: '' },
 ]
 
 function AllianceCard({ a, accentColor, dimColor }: { a: Alliance; accentColor: string; dimColor: string }) {
@@ -132,7 +133,7 @@ export default function AlliancePage() {
                   {a.name || '(준비중)'}
                 </span>
               </div>
-              {a.name && (
+              {a.name && a.leader && (
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm" style={{ color: 'var(--text-muted)' }}>
                   <span>
                     <span className="text-xs mr-1" style={{ color: accent }}>맹주</span>
