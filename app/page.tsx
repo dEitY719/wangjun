@@ -46,13 +46,13 @@ export default function Home() {
   return (
     <div>
       {/* 메인 타이틀 */}
-      <div style={{ paddingTop: 52 }}>
-        <img src="/main-title.png" alt="삼국지 왕전" style={{ width: '100%', display: 'block' }} />
+      <div style={{ paddingTop: 52, textAlign: 'center' }}>
+        <img src="/main-title.png" alt="삼국지 왕전" style={{ maxWidth: '100%', display: 'inline-block' }} />
       </div>
 
       {/* 공지 배너 */}
-      <div style={{ marginBottom: 16 }}>
-        <img src="/notice.png" alt="공지 사항" style={{ width: '100%', display: 'block' }} />
+      <div style={{ marginBottom: 16, textAlign: 'center' }}>
+        <img src="/notice.png" alt="공지 사항" style={{ maxWidth: '100%', display: 'inline-block' }} />
       </div>
 
       {loading ? (
