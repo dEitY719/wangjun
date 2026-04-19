@@ -20,13 +20,39 @@ function formatDate(iso: string) {
   })
 }
 
-async function copyUrl() {
-  try {
-    await navigator.clipboard.writeText(window.location.href)
-    alert('URL이 복사되었습니다!')
-  } catch {
-    alert(window.location.href)
-  }
+/** 마크다운 → 카카오톡 순수 텍스트 변환 */
+function markdownToKakao(title: string, md: string): string {
+  const body = md
+    // 코드 블록 제거 (내용만 유지)
+    .replace(/```[\w]*\n?([\s\S]*?)```/g, '$1')
+    // 제목 (## → 그대로, # 기호만 제거)
+    .replace(/^#{1,6}\s+(.+)$/gm, '$1')
+    // 구분선
+    .replace(/^---+$/gm, '──────────────────')
+    // 굵게 / 기울임 / 취소선
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/~~(.+?)~~/g, '$1')
+    // 좌표 링크 [지역명](x,y) → 📍지역명(x,y)
+    .replace(/\[([^\]]+)\]\((\d+),(\d+)\)/g, '📍$1($2,$3)')
+    // 일반 링크
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    // 인용구 (> ...)
+    .replace(/^>\s*/gm, '  ')
+    // 비순서 목록
+    .replace(/^[-*+]\s+/gm, '• ')
+    // 인라인 코드
+    .replace(/`(.+?)`/g, '$1')
+    // 표 구분선 행 제거
+    .replace(/^\|[-| :]+\|$/gm, '')
+    // 표 데이터 행
+    .replace(/^\|(.+)\|$/gm, (_, row: string) =>
+      row.split('|').map((c) => c.trim()).filter(Boolean).join('  '))
+    // 3줄 이상 공백 → 2줄로
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+
+  return `[${title}]\n\n${body}`
 }
 
 export default function NoticeDetail({ notice }: { notice: Notice }) {
@@ -37,6 +63,8 @@ export default function NoticeDetail({ notice }: { notice: Notice }) {
   const [pwInput, setPwInput]       = useState('')
   const [loginError, setLoginError] = useState(false)
   const [logging, setLogging]       = useState(false)
+
+  const [copied, setCopied] = useState<'msg' | 'url' | null>(null)
 
   const handleQuickLogin = async () => {
     if (!pwInput.trim()) return
@@ -65,6 +93,27 @@ export default function NoticeDetail({ notice }: { notice: Notice }) {
     else alert('삭제 실패. 관리 페이지에서 다시 시도해주세요.')
   }
 
+  const copyMsg = async () => {
+    const text = markdownToKakao(notice.title, notice.content)
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied('msg')
+      setTimeout(() => setCopied(null), 2500)
+    } catch {
+      alert(text)
+    }
+  }
+
+  const copyUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href)
+      setCopied('url')
+      setTimeout(() => setCopied(null), 2500)
+    } catch {
+      alert(window.location.href)
+    }
+  }
+
   return (
     <div style={{ padding: '0 16px' }}>
       {/* 상단 네비게이션 */}
@@ -84,7 +133,6 @@ export default function NoticeDetail({ notice }: { notice: Notice }) {
         {ready && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {isAdmin ? (
-              /* 로그인 상태 → 수정/삭제 버튼 */
               <>
                 <Link href={`/admin?edit=${notice.id}`} style={{
                   fontSize: 14, padding: '6px 14px', borderRadius: 8,
@@ -94,7 +142,6 @@ export default function NoticeDetail({ notice }: { notice: Notice }) {
                 <button onClick={handleDelete} className="btn-danger" style={{ fontSize: 14 }}>삭제</button>
               </>
             ) : showLogin ? (
-              /* 인증 폼 */
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <input
                   type="password"
@@ -120,11 +167,9 @@ export default function NoticeDetail({ notice }: { notice: Notice }) {
                 }}>✕</button>
               </div>
             ) : (
-              /* 비로그인 → 관리자 버튼 */
               <button onClick={() => setShowLogin(true)} style={{
                 fontSize: 13, padding: '5px 10px', borderRadius: 8, border: 'none',
-                background: 'none', color: 'var(--label-3)', cursor: 'pointer',
-                fontFamily: 'inherit',
+                background: 'none', color: 'var(--label-3)', cursor: 'pointer', fontFamily: 'inherit',
               }}>관리자</button>
             )}
           </div>
@@ -140,10 +185,8 @@ export default function NoticeDetail({ notice }: { notice: Notice }) {
               background: 'rgba(10,132,255,.15)', color: 'var(--blue)',
             }}>고정</span>
           )}
-          <span
-            className={`badge-${notice.category}`}
-            style={{ fontSize: 12, padding: '3px 9px', borderRadius: 100, fontWeight: 600 }}
-          >
+          <span className={`badge-${notice.category}`}
+            style={{ fontSize: 12, padding: '3px 9px', borderRadius: 100, fontWeight: 600 }}>
             {CATEGORY_LABEL[notice.category]}
           </span>
         </div>
@@ -152,7 +195,6 @@ export default function NoticeDetail({ notice }: { notice: Notice }) {
           {notice.title}
         </h1>
 
-        {/* suppressHydrationWarning: 서버(Node.js)와 브라우저의 locale 날짜 포맷 차이 방지 */}
         <p style={{ fontSize: 14, color: 'var(--label-3)' }} suppressHydrationWarning>
           {formatDate(notice.created_at)}
         </p>
@@ -167,9 +209,40 @@ export default function NoticeDetail({ notice }: { notice: Notice }) {
       </div>
 
       {/* 공유 버튼 */}
-      <button onClick={copyUrl} className="btn-primary" style={{ marginBottom: 8 }}>
-        URL 복사 (카카오톡 공유용)
-      </button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 8 }}>
+        {/* 카카오톡 메시지 복사 */}
+        <button onClick={copyMsg} style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          background: copied === 'msg' ? 'rgba(48,209,88,0.18)' : '#FEE500',
+          color: copied === 'msg' ? 'var(--green)' : '#3A1D1D',
+          fontWeight: 700, borderRadius: 14, padding: '15px 20px', fontSize: 16,
+          border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+          transition: 'all .2s',
+        }}>
+          {copied === 'msg' ? (
+            <>✓ 복사됨</>
+          ) : (
+            <>
+              <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 20, height: 20 }}>
+                <path d="M12 3C6.48 3 2 6.92 2 11.7c0 2.9 1.58 5.47 4.04 7.1L5.1 21.9l3.5-1.86c1.1.3 2.22.46 3.4.46 5.52 0 10-3.92 10-8.7C22 6.92 17.52 3 12 3z"/>
+              </svg>
+              카카오톡 전달 메시지 복사
+            </>
+          )}
+        </button>
+
+        {/* URL 복사 */}
+        <button onClick={copyUrl} style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          background: copied === 'url' ? 'rgba(48,209,88,0.12)' : 'var(--bg-2)',
+          color: copied === 'url' ? 'var(--green)' : 'var(--label-2)',
+          fontWeight: 600, borderRadius: 14, padding: '13px 20px', fontSize: 15,
+          border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+          transition: 'all .2s',
+        }}>
+          {copied === 'url' ? '✓ URL 복사됨' : '🔗 URL 복사'}
+        </button>
+      </div>
     </div>
   )
 }
