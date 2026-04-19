@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabase } from '@/lib/supabase'
 import { checkAdminAuth, checkAnyWriteAuth } from '@/lib/auth'
+import { loadFileNoticeById } from '@/lib/fileNotices'
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+
+  if (id.startsWith('file-')) {
+    const notice = loadFileNoticeById(id)
+    if (!notice) return NextResponse.json({ error: '공지를 찾을 수 없습니다' }, { status: 404 })
+    return NextResponse.json(notice)
+  }
+
   const { data, error } = await getSupabase()
     .from('notices')
     .select('*')

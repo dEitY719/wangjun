@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import type { Notice } from '@/lib/supabase'
 import { useMemberAuth } from '@/app/hooks/useMemberAuth'
 import MemberLoginModal from '@/app/components/MemberLoginModal'
+import PassphraseGate from '@/app/components/PassphraseGate'
 
 const CATEGORY_LABEL: Record<string, string> = {
   urgent: '긴급',
@@ -49,6 +50,7 @@ export default function Home() {
   }, [])
 
   return (
+    <PassphraseGate>
     <div>
       {/* 운영진 로그인 아이콘 */}
       <button onClick={() => setShowModal(true)} style={{
@@ -140,5 +142,6 @@ export default function Home() {
         </div>
       )}
     </div>
+    </PassphraseGate>
   )
 }

@@ -23,7 +23,7 @@ const CATEGORY_AUTO_TITLE: Record<string, string> = {
 }
 
 const TARGET_GROUPS = [
-  { label: '촉나라', members: ['한나라', '대한제국', '호표기'] },
+  { label: '촉나라', members: ['한나라', '대한제국', '호표기', '곽회사단'] },
   { label: '오나라', members: ['은하수', '향', 'kor', '환'] },
 ]
 
@@ -51,6 +51,11 @@ export default function AdminPage() {
   const [loading, setLoading]   = useState(false)
   const [members, setMembers]   = useState<Member[]>([])
   const [memberLoading, setMemberLoading] = useState(false)
+
+  // 암구호
+  const [passphrase, setPassphrase]       = useState('')
+  const [passphraseInput, setPassphraseInput] = useState('')
+  const [passphraseMsg, setPassphraseMsg] = useState('')
 
   // 폼 상태
   const [editingId, setEditingId]   = useState<number | null>(null)
@@ -97,6 +102,33 @@ export default function AdminPage() {
     setMemberLoading(false)
   }, [])
 
+  const fetchPassphrase = useCallback(async (pwd: string) => {
+    const res = await fetch('/api/passphrase', { headers: { 'x-admin-password': pwd } })
+    if (res.ok) {
+      const data = await res.json()
+      setPassphrase(data.passphrase || '')
+      setPassphraseInput(data.passphrase || '')
+    }
+  }, [])
+
+  const savePassphrase = async () => {
+    if (!passphraseInput.trim()) return
+    const pwd = auth.password || passwordInput
+    const res = await fetch('/api/passphrase', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': pwd },
+      body: JSON.stringify({ passphrase: passphraseInput }),
+    })
+    if (res.ok) {
+      setPassphrase(passphraseInput)
+      setPassphraseMsg('저장됨 ✓')
+      setTimeout(() => setPassphraseMsg(''), 2500)
+    } else {
+      setPassphraseMsg('저장 실패')
+      setTimeout(() => setPassphraseMsg(''), 2500)
+    }
+  }
+
   const handleMemberAction = async (id: string, action: 'approve' | 'reject' | 'delete') => {
     const pwd = auth.password || passwordInput
     if (action === 'delete') {
@@ -117,8 +149,9 @@ export default function AdminPage() {
       setAuthed(true)
       fetchNotices()
       fetchMembers(auth.password)
+      fetchPassphrase(auth.password)
     }
-  }, [auth.ready, auth.isAdmin, authed, fetchNotices, fetchMembers, auth.password])
+  }, [auth.ready, auth.isAdmin, authed, fetchNotices, fetchMembers, fetchPassphrase, auth.password])
 
   // 파생 계산
   const effectiveTargets = (): string[] => {
@@ -190,7 +223,7 @@ export default function AdminPage() {
   }, [])
 
   const startEdit = useCallback((n: Notice) => {
-    setEditingId(n.id)
+    setEditingId(typeof n.id === 'number' ? n.id : null)
     // 제목이 자동 제목과 일치하면 카테고리 복원, 아니면 일반으로
     const matchedCat = (Object.entries(CATEGORY_AUTO_TITLE) as [CategoryType, string][])
       .find(([, t]) => t === n.title.trim())
@@ -240,7 +273,7 @@ export default function AdminPage() {
     if (res.ok) {
       auth.saveAuth(passwordInput)
       setAuthed(true); setAuthError('')
-      fetchNotices(); fetchMembers(passwordInput)
+      fetchNotices(); fetchMembers(passwordInput); fetchPassphrase(passwordInput)
     } else {
       setAuthError('비밀번호가 틀렸습니다')
     }
@@ -414,7 +447,7 @@ export default function AdminPage() {
                         style={{ fontSize: 13, padding: '6px 10px', borderRadius: 8, border: 'none', background: isEditing ? 'rgba(255,159,10,0.18)' : 'rgba(10,132,255,0.15)', color: isEditing ? 'var(--orange)' : 'var(--blue)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
                         {isEditing ? '취소' : '수정'}
                       </button>
-                      <button onClick={() => handleDelete(n.id)} className="btn-danger">삭제</button>
+                      {typeof n.id === 'number' && <button onClick={() => handleDelete(n.id as number)} className="btn-danger">삭제</button>}
                     </div>
                   </div>
                 </div>
@@ -422,6 +455,43 @@ export default function AdminPage() {
             })}
           </div>
         )}
+      </div>
+
+      {/* ── 암구호 관리 ── */}
+      <div style={{ padding: '0 16px 20px' }}>
+        <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--label-3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10, padding: '0 2px' }}>
+          🔐 암구호 관리
+        </p>
+        <div style={{ background: 'var(--bg-2)', borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 13, color: 'var(--label-3)', minWidth: 56 }}>현재</span>
+            <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: 2, color: 'var(--blue)' }}>
+              {passphrase || '(미설정)'}
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              type="text"
+              placeholder="새 암구호 (단어 또는 4~6자리 숫자)"
+              value={passphraseInput}
+              onChange={e => setPassphraseInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && savePassphrase()}
+              style={{ flex: 1, padding: '8px 12px', borderRadius: 9, background: 'var(--bg-3)', color: 'var(--label)', border: 'none', fontSize: 15, outline: 'none', fontFamily: 'inherit' }}
+            />
+            <button onClick={savePassphrase} style={{
+              padding: '8px 16px', borderRadius: 9, border: 'none', fontFamily: 'inherit',
+              background: 'rgba(10,132,255,0.15)', color: 'var(--blue)', fontWeight: 600, fontSize: 14, cursor: 'pointer',
+            }}>변경</button>
+          </div>
+          {passphraseMsg && (
+            <p style={{ fontSize: 13, color: passphraseMsg.includes('실패') ? 'var(--red)' : 'var(--green)', margin: 0 }}>
+              {passphraseMsg}
+            </p>
+          )}
+          <p style={{ fontSize: 12, color: 'var(--label-3)', margin: 0 }}>
+            변경 후 연합 카톡에 공유하세요. 탭을 닫으면 재인증이 필요합니다.
+          </p>
+        </div>
       </div>
 
       {/* ── 멤버 관리 ── */}

@@ -29,6 +29,17 @@ create table notices (
 -- alter table members enable row level security;
 -- create policy "Service all" on members for all using (true);
 
+-- ── settings 테이블 (암구호 등 설정값) ──
+create table settings (
+  key text primary key,
+  value text not null,
+  updated_at timestamptz not null default now()
+);
+alter table settings enable row level security;
+create policy "Service all" on settings for all using (true);
+-- 초기 암구호 설정 (원하는 값으로 변경하세요)
+insert into settings (key, value) values ('passphrase', '왕전');
+
 -- 최신 공지가 먼저 나오도록 인덱스
 create index on notices (created_at desc);
 

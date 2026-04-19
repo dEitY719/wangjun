@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabase } from '@/lib/supabase'
 import { checkAnyWriteAuth } from '@/lib/auth'
+import { loadFileNotices } from '@/lib/fileNotices'
 
 export async function GET() {
   const supabase = getSupabase()
@@ -12,7 +13,15 @@ export async function GET() {
     .limit(50)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+
+  const fileNotices = loadFileNotices()
+  const all = [...(data ?? []), ...fileNotices]
+    .sort((a, b) => {
+      if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1
+      return b.created_at.localeCompare(a.created_at)
+    })
+
+  return NextResponse.json(all)
 }
 
 export async function POST(req: NextRequest) {

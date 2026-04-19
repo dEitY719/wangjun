@@ -12,7 +12,7 @@ type Template = { name: string; title: string; category: string; time: string; b
 const CATEGORY_LABEL: Record<string, string> = { urgent: '긴급', notice: '공지', strategy: '전략', general: '일반' }
 const CATEGORY_AUTO_TITLE: Record<string, string> = { urgent: '🚨 긴급', notice: '📢 공지', strategy: '⚔️ 전략', general: '' }
 const TARGET_GROUPS = [
-  { label: '촉나라', members: ['한나라', '대한제국', '호표기'] },
+  { label: '촉나라', members: ['한나라', '대한제국', '호표기', '곽회사단'] },
   { label: '오나라', members: ['은하수', '향', 'kor', '환'] },
 ]
 const COORD_ACTIONS = ['공성', '진출', '공격', '수비', '요새 건설']

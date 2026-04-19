@@ -9,7 +9,7 @@ export type Member = {
 }
 
 export type Notice = {
-  id: number
+  id: number | string
   title: string
   content: string
   category: 'notice' | 'urgent' | 'general' | 'strategy'
