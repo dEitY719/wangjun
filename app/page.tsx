@@ -45,9 +45,13 @@ export default function Home() {
 
   return (
     <div>
-      {/* Large Title */}
-      <div style={{ padding: '52px 20px 16px' }}>
-        <h1 style={{ fontSize: 34, fontWeight: 700, letterSpacing: -0.5, lineHeight: 1.1 }}>공지</h1>
+      {/* 공지 배너 */}
+      <div style={{ paddingTop: 52, marginBottom: 16 }}>
+        <img
+          src="/notice.png"
+          alt="공지 사항"
+          style={{ width: '100%', display: 'block', objectFit: 'cover' }}
+        />
       </div>
 
       {loading ? (
