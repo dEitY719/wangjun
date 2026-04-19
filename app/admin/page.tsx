@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import MarkdownRenderer from '@/app/components/MarkdownRenderer'
 import { useAdminAuth } from '@/app/hooks/useAdminAuth'
-import type { Notice } from '@/lib/supabase'
+import type { Notice, Member } from '@/lib/supabase'
 
 type CategoryType = 'notice' | 'urgent' | 'general' | 'strategy'
 type CoordData = { name: string; x: string; y: string; actions: string[] }
@@ -49,6 +49,8 @@ export default function AdminPage() {
 
   const [notices, setNotices]   = useState<Notice[]>([])
   const [loading, setLoading]   = useState(false)
+  const [members, setMembers]   = useState<Member[]>([])
+  const [memberLoading, setMemberLoading] = useState(false)
 
   // 폼 상태
   const [editingId, setEditingId]   = useState<number | null>(null)
@@ -87,12 +89,36 @@ export default function AdminPage() {
     setLoading(false)
   }, [])
 
+  const fetchMembers = useCallback(async (pwd: string) => {
+    setMemberLoading(true)
+    const res = await fetch('/api/members', { headers: { 'x-admin-password': pwd } })
+    const data = await res.json()
+    setMembers(Array.isArray(data) ? data : [])
+    setMemberLoading(false)
+  }, [])
+
+  const handleMemberAction = async (id: string, action: 'approve' | 'reject' | 'delete') => {
+    const pwd = auth.password || passwordInput
+    if (action === 'delete') {
+      if (!confirm(`${id} 계정을 삭제하시겠습니까?`)) return
+      await fetch(`/api/members/${id}`, { method: 'DELETE', headers: { 'x-admin-password': pwd } })
+    } else {
+      await fetch(`/api/members/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': pwd },
+        body: JSON.stringify({ action }),
+      })
+    }
+    fetchMembers(pwd)
+  }
+
   useEffect(() => {
     if (auth.ready && auth.isAdmin && !authed) {
       setAuthed(true)
       fetchNotices()
+      fetchMembers(auth.password)
     }
-  }, [auth.ready, auth.isAdmin, authed, fetchNotices])
+  }, [auth.ready, auth.isAdmin, authed, fetchNotices, fetchMembers, auth.password])
 
   // 파생 계산
   const effectiveTargets = (): string[] => {
@@ -213,7 +239,8 @@ export default function AdminPage() {
     })
     if (res.ok) {
       auth.saveAuth(passwordInput)
-      setAuthed(true); setAuthError(''); fetchNotices()
+      setAuthed(true); setAuthError('')
+      fetchNotices(); fetchMembers(passwordInput)
     } else {
       setAuthError('비밀번호가 틀렸습니다')
     }
@@ -390,6 +417,66 @@ export default function AdminPage() {
                       <button onClick={() => handleDelete(n.id)} className="btn-danger">삭제</button>
                     </div>
                   </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ── 멤버 관리 ── */}
+      <div style={{ padding: '0 16px 20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, padding: '0 2px' }}>
+          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--label-3)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            운영진 관리
+          </p>
+          <button onClick={() => fetchMembers(auth.password || passwordInput)}
+            style={{ fontSize: 13, padding: '5px 10px', borderRadius: 8, border: 'none', background: 'var(--fill-3)', color: 'var(--label-2)', cursor: 'pointer', fontFamily: 'inherit' }}>
+            새로고침
+          </button>
+        </div>
+
+        {memberLoading ? (
+          <p style={{ textAlign: 'center', padding: '20px 0', color: 'var(--label-2)', fontSize: 15 }} className="animate-pulse">불러오는 중...</p>
+        ) : members.length === 0 ? (
+          <p style={{ textAlign: 'center', padding: '20px 0', color: 'var(--label-3)', fontSize: 15 }}>신청자가 없습니다</p>
+        ) : (
+          <div style={{ borderRadius: 12, overflow: 'hidden', background: 'var(--bg-2)' }}>
+            {(['pending', 'approved', 'rejected'] as const).map(status => {
+              const group = members.filter(m => m.status === status)
+              if (group.length === 0) return null
+              const statusLabel = status === 'pending' ? '⏳ 승인 대기' : status === 'approved' ? '✅ 승인됨' : '🚫 거절됨'
+              return (
+                <div key={status}>
+                  <div style={{ padding: '8px 14px 4px', background: 'var(--bg-3)' }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--label-3)', letterSpacing: 0.3 }}>{statusLabel} ({group.length})</span>
+                  </div>
+                  {group.map((m, i) => (
+                    <div key={m.id} style={{ padding: '10px 14px', position: 'relative' }}>
+                      {i > 0 && <div style={{ position: 'absolute', top: 0, left: 14, right: 0, height: 1, background: 'var(--sep)' }} />}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: 15, fontWeight: 500 }}>{m.display_name ? `${m.display_name} (${m.id})` : m.id}</p>
+                          <p style={{ fontSize: 12, color: 'var(--label-3)', marginTop: 2 }}>
+                            신청 {new Date(m.requested_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                          {status === 'pending' && <>
+                            <button onClick={() => handleMemberAction(m.id, 'approve')}
+                              style={{ fontSize: 13, padding: '6px 10px', borderRadius: 8, border: 'none', background: 'rgba(48,209,88,0.2)', color: 'var(--green)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>승인</button>
+                            <button onClick={() => handleMemberAction(m.id, 'reject')}
+                              style={{ fontSize: 13, padding: '6px 10px', borderRadius: 8, border: 'none', background: 'var(--fill-3)', color: 'var(--label-2)', cursor: 'pointer', fontFamily: 'inherit' }}>거절</button>
+                          </>}
+                          {status === 'approved' && (
+                            <button onClick={() => handleMemberAction(m.id, 'reject')}
+                              style={{ fontSize: 13, padding: '6px 10px', borderRadius: 8, border: 'none', background: 'rgba(255,159,10,0.18)', color: 'var(--orange)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>권한 박탈</button>
+                          )}
+                          <button onClick={() => handleMemberAction(m.id, 'delete')} className="btn-danger">삭제</button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )
             })}

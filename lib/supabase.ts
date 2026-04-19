@@ -1,5 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
 
+export type Member = {
+  id: string
+  display_name: string | null
+  status: 'pending' | 'approved' | 'rejected'
+  requested_at: string
+  approved_at: string | null
+}
+
 export type Notice = {
   id: number
   title: string

@@ -16,6 +16,19 @@ create table notices (
 -- 이미 테이블이 있다면: ALTER TABLE notices ADD COLUMN kakao_content TEXT;
 -- kakao_content text,
 
+-- ── members 테이블 (운영진 계정 관리) ──
+-- Supabase SQL Editor에서 아래 실행:
+-- create table members (
+--   id text primary key,
+--   pin text not null,
+--   display_name text,
+--   status text not null default 'pending' check (status in ('pending','approved','rejected')),
+--   requested_at timestamptz not null default now(),
+--   approved_at timestamptz
+-- );
+-- alter table members enable row level security;
+-- create policy "Service all" on members for all using (true);
+
 -- 최신 공지가 먼저 나오도록 인덱스
 create index on notices (created_at desc);
 

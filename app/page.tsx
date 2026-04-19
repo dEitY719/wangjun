@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import type { Notice } from '@/lib/supabase'
+import { useMemberAuth } from '@/app/hooks/useMemberAuth'
+import MemberLoginModal from '@/app/components/MemberLoginModal'
 
 const CATEGORY_LABEL: Record<string, string> = {
   urgent: '긴급',
@@ -34,8 +36,10 @@ function stripMd(s: string) {
 }
 
 export default function Home() {
-  const [notices, setNotices] = useState<Notice[]>([])
-  const [loading, setLoading] = useState(true)
+  const [notices, setNotices]     = useState<Notice[]>([])
+  const [loading, setLoading]     = useState(true)
+  const [showModal, setShowModal] = useState(false)
+  const { session, ready }        = useMemberAuth()
 
   useEffect(() => {
     fetch('/api/notices')
@@ -46,6 +50,22 @@ export default function Home() {
 
   return (
     <div>
+      {/* 운영진 로그인 아이콘 */}
+      <button onClick={() => setShowModal(true)} style={{
+        position: 'fixed', top: 12, right: 16, zIndex: 100,
+        background: session ? 'rgba(10,132,255,0.15)' : 'var(--fill-3)',
+        border: 'none', borderRadius: 20, padding: '6px 10px',
+        display: 'flex', alignItems: 'center', gap: 5,
+        cursor: 'pointer', color: session ? 'var(--blue)' : 'var(--label-3)',
+      }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+        {ready && session && <span style={{ fontSize: 12, fontWeight: 600 }}>{session.displayName || session.id}</span>}
+      </button>
+
+      {showModal && <MemberLoginModal onClose={() => setShowModal(false)} />}
+
       {/* 메인 타이틀 */}
       <div style={{ paddingTop: 52, textAlign: 'center' }}>
         <img src="/main-title.png" alt="삼국지 왕전" style={{ maxWidth: '100%', display: 'inline-block' }} />

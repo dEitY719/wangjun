@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabase } from '@/lib/supabase'
+import { checkAnyWriteAuth } from '@/lib/auth'
 
 export async function GET() {
   const supabase = getSupabase()
@@ -15,8 +16,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const password = req.headers.get('x-admin-password')
-  if (password !== process.env.ADMIN_PASSWORD) {
+  if (!(await checkAnyWriteAuth(req))) {
     return NextResponse.json({ error: '인증 실패' }, { status: 401 })
   }
 
