@@ -10,6 +10,10 @@ create table notices (
   created_at timestamptz not null default now()
 );
 
+-- 카카오톡 메신저용 별도 텍스트 (선택 컬럼)
+-- 이미 테이블이 있다면: ALTER TABLE notices ADD COLUMN kakao_content TEXT;
+-- kakao_content text,
+
 -- 최신 공지가 먼저 나오도록 인덱스
 create index on notices (created_at desc);
 
