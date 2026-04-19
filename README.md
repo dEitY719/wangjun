@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 왕준 — 게임 길드 운영 웹앱
 
-## Getting Started
+Next.js 15 + Supabase 기반의 길드 공지·지도 관리 서비스.
 
-First, run the development server:
+## 주요 기능
+
+| 경로 | 설명 |
+|---|---|
+| `/` | 공지 목록 |
+| `/notice/:id` | 공지 상세 및 공유 URL |
+| `/admin` | 공지 작성·관리 (비밀번호 필요) |
+| `/alliance` | 동맹 정보 |
+| `/info` | 성·부대 정보 |
+
+## 인프라
+
+| 서비스 | 역할 |
+|---|---|
+| [Vercel](https://vercel.com) | Next.js 호스팅, GitHub 연동 자동 배포 |
+| [Supabase](https://supabase.com) | PostgreSQL 데이터베이스 (공지, 지도 데이터) |
+
+자세한 설정 내용: [Vercel 설정](docs/readme/vercel.md) · [Supabase 설정](docs/readme/supabase.md)
+
+## 로컬 개발
 
 ```bash
+# 1. 환경변수 설정 (.env.local 파일 직접 생성)
+# NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, ADMIN_PASSWORD 입력
+
+# 2. 의존성 설치 및 실행
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 배포
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`main` 브랜치에 push하면 Vercel에서 자동 빌드·배포된다.
+초기 배포 절차: [DEPLOY.md](DEPLOY.md)

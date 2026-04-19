@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import MapView from './components/MapView'
 
 type InfoTab = '지도' | '관청Lv'
 const TABS: InfoTab[] = ['지도', '관청Lv']
@@ -35,13 +36,7 @@ export default function InfoPage() {
       </div>
 
       {/* 지도 */}
-      {tab === '지도' && (
-        <div style={{ padding: '60px 20px', textAlign: 'center' }}>
-          <div style={{ fontSize: 52, marginBottom: 12 }}>🗺️</div>
-          <p style={{ fontSize: 17, color: 'var(--label-2)', marginBottom: 4 }}>준비 중입니다</p>
-          <p style={{ fontSize: 15, color: 'var(--label-3)' }}>지도 기능이 곧 추가될 예정입니다</p>
-        </div>
-      )}
+      {tab === '지도' && <MapView />}
 
       {/* 관청Lv */}
       {tab === '관청Lv' && (

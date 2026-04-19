@@ -57,3 +57,95 @@ create policy "Service update" on notices
 
 create policy "Service delete" on notices
   for delete using (true);
+
+-- ═══════════════════════════════════════════════
+-- 지도 기능 테이블
+-- ═══════════════════════════════════════════════
+
+-- ── factions (진영색상) ──
+create table factions (
+  id          text primary key,   -- '위' | '촉' | '오'
+  color_label text not null,      -- '하늘색' | '연두색' | '옅은빨강'
+  color_hex   text not null       -- CSS hex 색상
+);
+
+insert into factions (id, color_label, color_hex) values
+  ('위', '하늘색',   '#7DD3FC'),
+  ('촉', '연두색',   '#86EFAC'),
+  ('오', '옅은빨강', '#FCA5A5');
+
+alter table factions enable row level security;
+create policy "Public read" on factions for select using (true);
+create policy "Service all"  on factions for all   using (true);
+
+
+-- ── alliances (동맹정보) ──
+create table alliances (
+  abbr       text primary key,             -- 호 (단축키): '라', '은', '한' …
+  name       text not null,               -- 동맹이름: '대한제국', '은하수' …
+  faction_id text not null references factions(id)
+);
+
+create index on alliances (faction_id);
+
+insert into alliances (abbr, name, faction_id) values
+  ('라',   '대한제국', '촉'),
+  ('은',   '은하수',   '오'),
+  ('한',   '한국',     '촉'),
+  ('향_2', '향단이',   '촉'),
+  ('환',   '환단',     '오');
+
+alter table alliances enable row level security;
+create policy "Public read" on alliances for select using (true);
+create policy "Service all"  on alliances for all   using (true);
+
+
+-- ── castle_troops (성부대) ──
+create table castle_troops (
+  level          text    primary key,  -- '1'~'10', '시', '관문' 등
+  garrison       integer not null,     -- 주성수비병력
+  unit_count     integer not null,     -- 부대수
+  defense_army   integer not null,     -- 성방어군
+  defense_rating text    not null      -- 방어수치 (예: '48K', '578K')
+);
+
+insert into castle_troops (level, garrison, unit_count, defense_army, defense_rating) values
+  ('1',  32700, 50,  27300, '48K'),
+  ('시', 32700, 570, 27300, '578K');
+
+alter table castle_troops enable row level security;
+create policy "Public read" on castle_troops for select using (true);
+create policy "Service all"  on castle_troops for all   using (true);
+
+
+-- ── castles (성위치) ──
+create table castles (
+  name          text    primary key,
+  level         text    not null references castle_troops(level),
+  x             integer not null,
+  y             integer not null,
+  alliance_abbr text    references alliances(abbr)  -- NULL = 미점령
+);
+
+create index on castles (alliance_abbr);
+create index on castles (level);
+
+insert into castles (name, level, x, y, alliance_abbr) values
+  ('팽성',   '1',  1574, 620,  '한'),
+  ('임기',   '1',  1802, 620,  '은'),
+  ('단양',   '1',  1490, 326,  '향_2'),
+  ('오현',   '1',  1652, 221,  '은'),
+  ('번성',   '1',  1070, 746,  '한'),
+  ('익양',   '1',  1190, 740,  '한'),
+  ('시상',   '1',  1046, 464,  '은'),
+  ('게양',   '1',   836, 341,  '환'),
+  ('침현',   '시',  812, 539,  null),
+  ('노현',   '시', 1670, 710,  null),
+  ('안풍',   '시', 1178, 578,  null),
+  ('광릉',   '시', 1610, 374,  null),
+  ('무현',   '1',   650, 866,  null),
+  ('백제성', '1',   530, 794,  '라');
+
+alter table castles enable row level security;
+create policy "Public read" on castles for select using (true);
+create policy "Service all"  on castles for all   using (true);
