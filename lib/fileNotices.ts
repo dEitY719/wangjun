@@ -45,7 +45,7 @@ export function loadFileNotices(): Notice[] {
 }
 
 export function loadFileNoticeById(id: string): Notice | null {
-  const name = id.replace(/^file-/, '')
+  const name = decodeURIComponent(id).replace(/^file-/, '')
   const filepath = path.join(NOTICES_DIR, `${name}.md`)
   if (!fs.existsSync(filepath)) return null
 
