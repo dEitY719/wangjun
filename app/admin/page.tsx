@@ -172,7 +172,7 @@ export default function AdminPage() {
     const targets = effectiveTargets()
 
     const coordLink = (name: string, x: string, y: string) =>
-      (x && y) ? `[${name}](${x},${y})` : `[${name}](죄송, 지도 검색해줘요!)`
+      (x && y) ? `[${name}](${x},${y})` : `[${name}](map-search)`
 
     if (perTargetCoords && targets.length > 1) {
       const coordLines = targets.map(t => {
