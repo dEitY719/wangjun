@@ -3,7 +3,6 @@
 import { useState } from 'react'
 
 type InfoTab = '지도' | '관청Lv'
-
 const TABS: InfoTab[] = ['지도', '관청Lv']
 
 const OFFICE_LEVELS = [
@@ -19,70 +18,74 @@ export default function InfoPage() {
 
   return (
     <div>
-      <h1 className="text-lg font-bold mb-4" style={{ color: 'var(--accent)' }}>📖 게임 정보</h1>
+      {/* Large Title */}
+      <div style={{ padding: '52px 20px 20px' }}>
+        <h1 style={{ fontSize: 34, fontWeight: 700, letterSpacing: -0.5, lineHeight: 1.1 }}>정보</h1>
+      </div>
 
-      {/* 탭 */}
-      <div className="flex gap-2 mb-5">
-        {TABS.map((t) => {
-          const active = tab === t
-          return (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className="px-5 py-2 rounded-lg font-bold text-sm transition-all"
-              style={{
-                background: active ? 'var(--accent-dim)' : 'var(--surface)',
-                color: active ? 'var(--accent)' : 'var(--text-muted)',
-                border: `1px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
-              }}
-            >
+      {/* Segmented Control */}
+      <div style={{ padding: '0 16px 20px' }}>
+        <div className="seg-control">
+          {TABS.map((t) => (
+            <button key={t} className={`seg-btn${tab === t ? ' active' : ''}`} onClick={() => setTab(t)}>
               {t}
             </button>
-          )
-        })}
+          ))}
+        </div>
       </div>
 
       {/* 지도 */}
       {tab === '지도' && (
-        <div className="card p-8 text-center" style={{ color: 'var(--text-muted)' }}>
-          <div className="text-4xl mb-3">🗺️</div>
-          <p className="text-sm">준비 중입니다.</p>
+        <div style={{ padding: '60px 20px', textAlign: 'center' }}>
+          <div style={{ fontSize: 52, marginBottom: 12 }}>🗺️</div>
+          <p style={{ fontSize: 17, color: 'var(--label-2)', marginBottom: 4 }}>준비 중입니다</p>
+          <p style={{ fontSize: 15, color: 'var(--label-3)' }}>지도 기능이 곧 추가될 예정입니다</p>
         </div>
       )}
 
       {/* 관청Lv */}
       {tab === '관청Lv' && (
-        <div>
-          <p className="text-xs mb-4 px-1" style={{ color: 'var(--text-muted)' }}>
-            관청 N레벨 달성 조건 — 해당 건물들이 모두 <span style={{ color: 'var(--accent)' }}>N-1레벨</span> 이상이어야 합니다.
+        <div style={{ padding: '0 16px' }}>
+          <p style={{ fontSize: 13, color: 'var(--label-3)', marginBottom: 12, padding: '0 4px' }}>
+            관청 N레벨 달성 조건 — 아래 건물들이 모두{' '}
+            <span style={{ color: 'var(--blue)', fontWeight: 600 }}>N-1레벨</span> 이상이어야 합니다
           </p>
-          <div className="space-y-2">
-            {OFFICE_LEVELS.map(({ level, requirements }) => (
-              <div key={level} className="card p-4 flex items-center gap-4">
-                {/* 관청 레벨 */}
-                <div className="shrink-0 text-center w-16">
-                  <div className="text-lg font-bold" style={{ color: 'var(--accent)' }}>{level}</div>
-                  <div className="text-xs" style={{ color: 'var(--text-muted)' }}>관청</div>
-                </div>
 
-                {/* 구분선 */}
-                <div className="w-px self-stretch" style={{ background: 'var(--border)' }} />
+          <div style={{ borderRadius: 12, overflow: 'hidden', background: 'var(--bg-2)' }}>
+            {OFFICE_LEVELS.map(({ level, requirements }, i) => (
+              <div key={level} style={{ padding: '14px 16px', position: 'relative' }}>
+                {i > 0 && (
+                  <div style={{ position: 'absolute', top: 0, left: 16, right: 0, height: 1, background: 'var(--sep)' }} />
+                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                  {/* Level badge */}
+                  <div style={{ flexShrink: 0, textAlign: 'center', minWidth: 52 }}>
+                    <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--orange)', letterSpacing: -0.5 }}>{level}</div>
+                    <div style={{ fontSize: 11, color: 'var(--label-3)', marginTop: 1 }}>관청</div>
+                  </div>
 
-                {/* 필요 건물 (모두 level-1) */}
-                <div className="flex flex-wrap gap-2">
-                  {requirements.map((req) => (
-                    <span
-                      key={req}
-                      className="text-xs px-2 py-1 rounded-md font-medium"
-                      style={{
-                        background: req === '군의당' ? 'var(--surface2)' : 'var(--accent-dim)',
-                        color: req === '군의당' ? 'var(--text-muted)' : 'var(--accent)',
-                        border: `1px solid ${req === '군의당' ? 'var(--border)' : 'var(--accent)'}`,
-                      }}
-                    >
-                      {req} {level - 1}
-                    </span>
-                  ))}
+                  {/* Separator */}
+                  <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--sep-opaque)' }} />
+
+                  {/* Requirements */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 6 }}>
+                    {requirements.map((req) => {
+                      const isPrimary = req === '군의당'
+                      return (
+                        <span key={req} style={{
+                          fontSize: 13,
+                          fontWeight: 600,
+                          padding: '4px 10px',
+                          borderRadius: 8,
+                          background: isPrimary ? 'var(--fill-3)' : 'rgba(255,159,10,0.14)',
+                          color: isPrimary ? 'var(--label-2)' : 'var(--orange)',
+                          letterSpacing: -0.1,
+                        }}>
+                          {req} {level - 1}
+                        </span>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
             ))}

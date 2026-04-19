@@ -6,13 +6,12 @@ type Kingdom = '위' | '촉' | '오'
 
 const TABS: Kingdom[] = ['위', '촉', '오']
 
-const TAB_COLOR: Record<Kingdom, { accent: string; dim: string }> = {
-  위: { accent: '#7eb3e0', dim: '#1e3a5f' },
-  촉: { accent: '#4caf7d', dim: '#0f3320' },
-  오: { accent: '#e07e7e', dim: '#5f1e1e' },
+const KC: Record<Kingdom, { accent: string; bg: string }> = {
+  위: { accent: '#0a84ff', bg: 'rgba(10,132,255,0.12)' },
+  촉: { accent: '#30d158', bg: 'rgba(48,209,88,0.12)'  },
+  오: { accent: '#ff9f0a', bg: 'rgba(255,159,10,0.12)' },
 }
 
-/* ───── 촉 데이터 ───── */
 type Alliance = {
   rank: number
   name: string
@@ -21,13 +20,6 @@ type Alliance = {
   diplomat?: string
 }
 
-const CHUK: Alliance[] = [
-  { rank: 1, name: '한나라',   leader: '손권',  command: '적토마', diplomat: '칭다오' },
-  { rank: 2, name: '대한제국', leader: 'DIOR',  command: '제1군' },
-  { rank: 3, name: '호표기',   leader: '비키',  command: '꽌우' },
-]
-
-/* ───── 오 데이터 ───── */
 type OAlliance = {
   rank: number
   name: string
@@ -35,115 +27,107 @@ type OAlliance = {
   viceLeaders?: string[]
 }
 
-const O: OAlliance[] = [
-  { rank: 1, name: '은하수', leader: '뽀꽁', viceLeaders: ['교라니', '공명', '뱅쇼', '정형돈'] },
-  { rank: 2, name: '향', leader: '' },
-  { rank: 3, name: 'kor', leader: '' },
-  { rank: 4, name: '환', leader: '' },
+const CHUK: Alliance[] = [
+  { rank: 1, name: '한나라',   leader: '손권',  command: '적토마', diplomat: '칭다오' },
+  { rank: 2, name: '대한제국', leader: 'DIOR',  command: '제1군' },
+  { rank: 3, name: '호표기',   leader: '비키',  command: '꽌우' },
 ]
 
-function AllianceCard({ a, accentColor, dimColor }: { a: Alliance; accentColor: string; dimColor: string }) {
+const O_DATA: OAlliance[] = [
+  { rank: 1, name: '은하수', leader: '뽀꽁', viceLeaders: ['교라니', '공명', '뱅쇼', '정형돈'] },
+  { rank: 2, name: '향',    leader: '' },
+  { rank: 3, name: 'kor',   leader: '' },
+  { rank: 4, name: '환',    leader: '' },
+]
+
+function InfoRow({ label, value, accent }: { label: string; value: string; accent: string }) {
   return (
-    <div className="card p-4" style={{ borderColor: accentColor + '55' }}>
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-xs font-bold px-2 py-0.5 rounded-full"
-          style={{ background: dimColor, color: accentColor, border: `1px solid ${accentColor}` }}>
-          {a.rank}맹
-        </span>
-        <span className="font-bold text-base">{a.name}</span>
-      </div>
-      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm" style={{ color: 'var(--text-muted)' }}>
-        <span>
-          <span className="text-xs mr-1" style={{ color: accentColor }}>맹주</span>
-          <span className="text-white font-medium">{a.leader}</span>
-        </span>
-        <span>
-          <span className="text-xs mr-1" style={{ color: accentColor }}>지휘부</span>
-          <span className="text-white font-medium">{a.command}</span>
-        </span>
-        {a.diplomat && (
-          <span>
-            <span className="text-xs mr-1" style={{ color: accentColor }}>외교</span>
-            <span className="text-white font-medium">{a.diplomat}</span>
-          </span>
-        )}
-      </div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <span style={{ fontSize: 12, color: accent, fontWeight: 600, minWidth: 36 }}>{label}</span>
+      <span style={{ fontSize: 15, fontWeight: 500 }}>{value}</span>
     </div>
   )
 }
 
 export default function AlliancePage() {
   const [tab, setTab] = useState<Kingdom>('촉')
-  const { accent, dim } = TAB_COLOR[tab]
+  const { accent, bg } = KC[tab]
 
   return (
     <div>
-      <h1 className="text-lg font-bold mb-4" style={{ color: 'var(--accent)' }}>⚔️ 연합 현황</h1>
+      {/* Large Title */}
+      <div style={{ padding: '52px 20px 20px' }}>
+        <h1 style={{ fontSize: 34, fontWeight: 700, letterSpacing: -0.5, lineHeight: 1.1 }}>연합</h1>
+      </div>
 
-      {/* 탭 */}
-      <div className="flex gap-2 mb-5">
-        {TABS.map((t) => {
-          const active = tab === t
-          const c = TAB_COLOR[t]
-          return (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className="px-5 py-2 rounded-lg font-bold text-sm transition-all"
-              style={{
-                background: active ? c.dim : 'var(--surface)',
-                color: active ? c.accent : 'var(--text-muted)',
-                border: `1px solid ${active ? c.accent : 'var(--border)'}`,
-              }}
-            >
+      {/* Segmented Control */}
+      <div style={{ padding: '0 16px 20px' }}>
+        <div className="seg-control">
+          {TABS.map((t) => (
+            <button key={t} className={`seg-btn${tab === t ? ' active' : ''}`} onClick={() => setTab(t)}>
               {t}
             </button>
-          )
-        })}
+          ))}
+        </div>
       </div>
 
       {/* 위 */}
       {tab === '위' && (
-        <div className="text-center py-16" style={{ color: 'var(--text-muted)' }}>
-          <div className="text-4xl mb-3">🏴</div>
-          <p>현재 등록된 연합 정보가 없습니다.</p>
+        <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>🏴</div>
+          <p style={{ fontSize: 17, color: 'var(--label-2)', marginBottom: 4 }}>등록된 연합 정보가 없습니다</p>
+          <p style={{ fontSize: 15, color: 'var(--label-3)' }}>조만간 업데이트될 예정입니다</p>
         </div>
       )}
 
       {/* 촉 */}
       {tab === '촉' && (
-        <div className="space-y-3">
+        <div style={{ margin: '0 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {CHUK.map((a) => (
-            <AllianceCard key={a.rank} a={a} accentColor={accent} dimColor={dim} />
+            <div key={a.rank} style={{ background: 'var(--bg-2)', borderRadius: 12, padding: '14px 16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <span style={{
+                  fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 100,
+                  background: bg, color: accent,
+                }}>
+                  {a.rank}맹
+                </span>
+                <span style={{ fontSize: 17, fontWeight: 600, letterSpacing: -0.2 }}>{a.name}</span>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '8px 20px' }}>
+                <InfoRow label="맹주" value={a.leader} accent={accent} />
+                <InfoRow label="지휘부" value={a.command} accent={accent} />
+                {a.diplomat && <InfoRow label="외교" value={a.diplomat} accent={accent} />}
+              </div>
+            </div>
           ))}
         </div>
       )}
 
       {/* 오 */}
       {tab === '오' && (
-        <div className="space-y-3">
-          {O.map((a) => (
-            <div key={a.rank} className="card p-4" style={{ borderColor: accent + '55' }}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full"
-                  style={{ background: dim, color: accent, border: `1px solid ${accent}` }}>
+        <div style={{ margin: '0 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {O_DATA.map((a) => (
+            <div key={a.rank} style={{ background: 'var(--bg-2)', borderRadius: 12, padding: '14px 16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: a.leader ? 10 : 0 }}>
+                <span style={{
+                  fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 100,
+                  background: bg, color: accent,
+                }}>
                   {a.rank}맹
                 </span>
-                <span className="font-bold text-base" style={{ color: a.name ? 'white' : 'var(--text-muted)' }}>
+                <span style={{
+                  fontSize: 17, fontWeight: 600, letterSpacing: -0.2,
+                  color: a.name ? 'var(--label)' : 'var(--label-3)',
+                }}>
                   {a.name || '(준비중)'}
                 </span>
               </div>
-              {a.name && a.leader && (
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm" style={{ color: 'var(--text-muted)' }}>
-                  <span>
-                    <span className="text-xs mr-1" style={{ color: accent }}>맹주</span>
-                    <span className="text-white font-medium">{a.leader}</span>
-                  </span>
+              {a.leader && (
+                <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '8px 20px' }}>
+                  <InfoRow label="맹주" value={a.leader} accent={accent} />
                   {a.viceLeaders && a.viceLeaders.length > 0 && (
-                    <span>
-                      <span className="text-xs mr-1" style={{ color: accent }}>부맹주</span>
-                      <span className="text-white font-medium">{a.viceLeaders.join(', ')}</span>
-                    </span>
+                    <InfoRow label="부맹주" value={a.viceLeaders.join(', ')} accent={accent} />
                   )}
                 </div>
               )}

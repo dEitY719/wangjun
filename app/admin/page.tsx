@@ -6,9 +6,9 @@ import remarkGfm from 'remark-gfm'
 import type { Notice } from '@/lib/supabase'
 
 const CATEGORY_LABEL: Record<string, string> = {
-  urgent: '🚨 긴급',
-  notice: '📢 공지',
-  general: '💬 일반',
+  urgent: '긴급',
+  notice: '공지',
+  general: '일반',
 }
 
 function formatDate(iso: string) {
@@ -18,17 +18,17 @@ function formatDate(iso: string) {
 }
 
 export default function AdminPage() {
-  const [password, setPassword] = useState('')
-  const [authed, setAuthed] = useState(false)
+  const [password, setPassword]   = useState('')
+  const [authed, setAuthed]       = useState(false)
   const [authError, setAuthError] = useState('')
 
-  const [notices, setNotices] = useState<Notice[]>([])
-  const [loading, setLoading] = useState(false)
+  const [notices, setNotices]     = useState<Notice[]>([])
+  const [loading, setLoading]     = useState(false)
 
-  const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
-  const [category, setCategory] = useState<'notice' | 'urgent' | 'general'>('notice')
-  const [isPinned, setIsPinned] = useState(false)
+  const [title, setTitle]         = useState('')
+  const [content, setContent]     = useState('')
+  const [category, setCategory]   = useState<'notice' | 'urgent' | 'general'>('notice')
+  const [isPinned, setIsPinned]   = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitMsg, setSubmitMsg] = useState('')
   const [editorTab, setEditorTab] = useState<'write' | 'preview'>('write')
@@ -68,25 +68,19 @@ export default function AdminPage() {
 
     const res = await fetch('/api/notices', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-admin-password': password,
-      },
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': password },
       body: JSON.stringify({ title, content, category, is_pinned: isPinned }),
     })
 
     if (res.ok) {
-      setTitle('')
-      setContent('')
-      setCategory('notice')
-      setIsPinned(false)
-      setEditorTab('write')
-      setSubmitMsg('✅ 공지가 등록되었습니다!')
+      setTitle(''); setContent(''); setCategory('notice')
+      setIsPinned(false); setEditorTab('write')
+      setSubmitMsg('success')
       fetchNotices()
     } else if (res.status === 401) {
-      setSubmitMsg('❌ 비밀번호가 틀렸습니다.')
+      setSubmitMsg('error-auth')
     } else {
-      setSubmitMsg('❌ 오류가 발생했습니다.')
+      setSubmitMsg('error')
     }
     setSubmitting(false)
   }
@@ -100,178 +94,188 @@ export default function AdminPage() {
     fetchNotices()
   }
 
+  /* ── Login screen ── */
   if (!authed) {
     return (
-      <div className="max-w-sm mx-auto mt-20">
-        <div className="card p-6">
-          <h1 className="text-xl font-bold mb-6 text-center" style={{ color: 'var(--accent)' }}>
-            🔐 관리자 로그인
-          </h1>
-          <form onSubmit={handleAuth} className="space-y-4">
+      <div style={{ padding: '52px 16px 0', display: 'flex', flexDirection: 'column' as const, alignItems: 'center' }}>
+        <div style={{ width: '100%', maxWidth: 360 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: -0.5, marginBottom: 32, textAlign: 'center' }}>관리자 로그인</h1>
+          <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column' as const, gap: 12 }}>
             <input
               type="password"
               placeholder="관리자 비밀번호"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg text-white outline-none"
-              style={{ background: 'var(--surface2)', border: '1px solid var(--border)' }}
+              className="ios-input"
             />
-            {authError && <p className="text-red-400 text-sm">{authError}</p>}
-            <button type="submit" className="btn-primary w-full py-3">
-              입장
-            </button>
+            {authError && (
+              <p style={{ fontSize: 14, color: 'var(--red)', textAlign: 'center' }}>{authError}</p>
+            )}
+            <button type="submit" className="btn-primary" style={{ marginTop: 4 }}>입장</button>
           </form>
         </div>
       </div>
     )
   }
 
+  /* ── Admin dashboard ── */
   return (
-    <div className="space-y-6">
-      <div className="card p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-bold text-lg" style={{ color: 'var(--accent)' }}>📝 공지 작성</h2>
-          <div className="flex items-center gap-2">
-            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>비밀번호</span>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-28 px-2 py-1 rounded text-white text-xs outline-none"
-              style={{ background: 'var(--surface2)', border: '1px solid var(--border)' }}
-            />
-          </div>
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* 카테고리 + 고정 */}
-          <div className="flex gap-3 flex-wrap">
-            <div className="flex gap-2">
-              {(['urgent', 'notice', 'general'] as const).map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setCategory(c)}
-                  className={`text-xs px-3 py-1.5 rounded-full font-semibold transition-opacity badge-${c}`}
-                  style={{ opacity: category === c ? 1 : 0.4 }}
-                >
-                  {CATEGORY_LABEL[c]}
-                </button>
-              ))}
-            </div>
-            <label className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: 'var(--text-muted)' }}>
-              <input
-                type="checkbox"
-                checked={isPinned}
-                onChange={(e) => setIsPinned(e.target.checked)}
-                className="rounded"
-              />
-              📌 고정
-            </label>
-          </div>
-
-          {/* 제목 */}
+    <div>
+      {/* Large Title */}
+      <div style={{ padding: '52px 20px 20px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+        <h1 style={{ fontSize: 34, fontWeight: 700, letterSpacing: -0.5, lineHeight: 1.1 }}>관리</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 4 }}>
+          <span style={{ fontSize: 13, color: 'var(--label-3)' }}>비밀번호</span>
           <input
-            type="text"
-            placeholder="제목"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-4 py-3 rounded-lg text-white outline-none"
-            style={{ background: 'var(--surface2)', border: '1px solid var(--border)' }}
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="ios-input"
+            style={{ width: 100, padding: '7px 12px', fontSize: 14, borderRadius: 8 }}
           />
-
-          {/* 작성 / 미리보기 탭 */}
-          <div>
-            <div className="flex gap-1 mb-2">
-              {(['write', 'preview'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setEditorTab(tab)}
-                  className="text-xs px-3 py-1.5 rounded-md font-medium transition-colors"
-                  style={{
-                    background: editorTab === tab ? 'var(--accent)' : 'var(--surface2)',
-                    color: editorTab === tab ? '#0f1117' : 'var(--text-muted)',
-                    border: '1px solid var(--border)',
-                  }}
-                >
-                  {tab === 'write' ? '✏️ 작성' : '👁 미리보기'}
-                </button>
-              ))}
-              <span className="ml-auto text-xs self-center" style={{ color: 'var(--text-muted)' }}>
-                {content.length}자 / {content.split('\n').length}줄
-              </span>
-            </div>
-
-            {editorTab === 'write' ? (
-              <textarea
-                placeholder={`마크다운 문법 지원\n\n**굵게**, *기울임*, ~~취소선~~\n# 제목, ## 소제목\n- 목록 항목\n1. 번호 목록\n> 인용구\n\`코드\``}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows={10}
-                className="w-full px-4 py-3 rounded-lg text-white outline-none resize-none font-mono text-sm"
-                style={{ background: 'var(--surface2)', border: '1px solid var(--border)', lineHeight: '1.7' }}
-              />
-            ) : (
-              <div
-                className="w-full px-4 py-3 rounded-lg min-h-[240px] notice-content"
-                style={{ background: 'var(--surface2)', border: '1px solid var(--border)' }}
-              >
-                {content.trim() ? (
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-                ) : (
-                  <span style={{ color: 'var(--text-muted)' }}>내용을 입력하면 미리보기가 표시됩니다.</span>
-                )}
-              </div>
-            )}
-          </div>
-
-          {submitMsg && (
-            <p className="text-sm font-medium" style={{ color: submitMsg.startsWith('✅') ? '#4caf50' : '#e05c5c' }}>
-              {submitMsg}
-            </p>
-          )}
-
-          <button type="submit" disabled={submitting} className="btn-primary w-full py-3">
-            {submitting ? '등록 중...' : '공지 등록'}
-          </button>
-        </form>
+        </div>
       </div>
 
-      {/* 공지 목록 */}
-      <div>
-        <h2 className="font-bold text-lg mb-3" style={{ color: 'var(--text-muted)' }}>
-          등록된 공지 ({notices.length})
-        </h2>
+      {/* Create form */}
+      <div style={{ margin: '0 16px 24px' }}>
+        <div style={{ background: 'var(--bg-2)', borderRadius: 12, padding: '18px 16px' }}>
+          <h2 style={{ fontSize: 17, fontWeight: 600, marginBottom: 16, letterSpacing: -0.2 }}>공지 작성</h2>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column' as const, gap: 12 }}>
+
+            {/* Category + pin */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div className="seg-control" style={{ flex: 1, marginRight: 12 }}>
+                {(['urgent', 'notice', 'general'] as const).map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCategory(c)}
+                    className={`seg-btn${category === c ? ' active' : ''}`}
+                    style={category === c ? {
+                      background: c === 'urgent' ? 'rgba(255,69,58,.2)' : c === 'notice' ? 'rgba(10,132,255,.2)' : 'var(--bg-2)',
+                      color: c === 'urgent' ? 'var(--red)' : c === 'notice' ? 'var(--blue)' : 'var(--label)',
+                    } : {}}
+                  >
+                    {CATEGORY_LABEL[c]}
+                  </button>
+                ))}
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, cursor: 'pointer', color: 'var(--label-2)', whiteSpace: 'nowrap' as const }}>
+                <input
+                  type="checkbox"
+                  checked={isPinned}
+                  onChange={(e) => setIsPinned(e.target.checked)}
+                  style={{ width: 16, height: 16, accentColor: 'var(--blue)' }}
+                />
+                고정
+              </label>
+            </div>
+
+            {/* Title */}
+            <input
+              type="text"
+              placeholder="제목"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="ios-input"
+            />
+
+            {/* Editor tabs */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <div className="seg-control" style={{ width: 180 }}>
+                  {(['write', 'preview'] as const).map((t) => (
+                    <button key={t} type="button" onClick={() => setEditorTab(t)}
+                      className={`seg-btn${editorTab === t ? ' active' : ''}`}>
+                      {t === 'write' ? '작성' : '미리보기'}
+                    </button>
+                  ))}
+                </div>
+                <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--label-3)' }}>
+                  {content.length}자 · {content.split('\n').length}줄
+                </span>
+              </div>
+
+              {editorTab === 'write' ? (
+                <textarea
+                  placeholder={`마크다운 지원\n\n**굵게**, *기울임*, ~~취소선~~\n# 제목, ## 소제목\n- 목록 항목\n> 인용구\n\`코드\``}
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  rows={10}
+                  className="ios-input"
+                  style={{ resize: 'vertical', fontFamily: "'SF Mono','Menlo',monospace", fontSize: 14, lineHeight: 1.7 }}
+                />
+              ) : (
+                <div className="notice-content ios-input" style={{ minHeight: 240, fontSize: 15 }}>
+                  {content.trim()
+                    ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+                    : <span style={{ color: 'var(--label-3)' }}>내용을 입력하면 미리보기가 표시됩니다</span>
+                  }
+                </div>
+              )}
+            </div>
+
+            {submitMsg && (
+              <p style={{
+                fontSize: 14, fontWeight: 500, textAlign: 'center',
+                color: submitMsg === 'success' ? 'var(--green)' : 'var(--red)',
+              }}>
+                {submitMsg === 'success'   ? '공지가 등록되었습니다!'    :
+                 submitMsg === 'error-auth' ? '비밀번호가 틀렸습니다.'   : '오류가 발생했습니다.'}
+              </p>
+            )}
+
+            <button type="submit" disabled={submitting} className="btn-primary">
+              {submitting ? '등록 중...' : '공지 등록'}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* Notice list */}
+      <div style={{ padding: '0 16px' }}>
+        <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--label-3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, padding: '0 4px' }}>
+          등록된 공지 {notices.length > 0 && `(${notices.length})`}
+        </p>
+
         {loading ? (
-          <p className="text-center py-8 animate-pulse" style={{ color: 'var(--text-muted)' }}>불러오는 중...</p>
+          <p style={{ textAlign: 'center', padding: '32px 0', color: 'var(--label-2)', fontSize: 15 }} className="animate-pulse">
+            불러오는 중...
+          </p>
         ) : notices.length === 0 ? (
-          <p className="text-center py-8" style={{ color: 'var(--text-muted)' }}>공지가 없습니다.</p>
+          <p style={{ textAlign: 'center', padding: '32px 0', color: 'var(--label-3)', fontSize: 15 }}>
+            공지가 없습니다
+          </p>
         ) : (
-          <div className="space-y-2">
-            {notices.map((n) => (
-              <div key={n.id} className="card p-4 flex items-center justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className={`text-xs px-1.5 py-0.5 rounded-full badge-${n.category}`}>
+          <div style={{ borderRadius: 12, overflow: 'hidden', background: 'var(--bg-2)' }}>
+            {notices.map((n, i) => (
+              <div key={n.id} style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, position: 'relative' }}>
+                {i > 0 && <div style={{ position: 'absolute', top: 0, left: 14, right: 0, height: 1, background: 'var(--sep)' }} />}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
+                    <span className={`badge-${n.category}`} style={{ fontSize: 11, padding: '1px 6px', borderRadius: 100, fontWeight: 600 }}>
                       {CATEGORY_LABEL[n.category]}
                     </span>
-                    {n.is_pinned && <span className="text-xs" style={{ color: 'var(--accent)' }}>📌</span>}
+                    {n.is_pinned && <span style={{ fontSize: 11, color: 'var(--blue)' }}>고정</span>}
                   </div>
-                  <p className="font-medium text-sm truncate">{n.title}</p>
-                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(n.created_at)}</p>
+                  <p style={{ fontSize: 15, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+                    {n.title}
+                  </p>
+                  <p style={{ fontSize: 12, color: 'var(--label-3)', marginTop: 2 }}>{formatDate(n.created_at)}</p>
                 </div>
-                <div className="flex gap-2 shrink-0">
+                <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                   <a
                     href={`/notice/${n.id}`}
                     target="_blank"
-                    className="text-xs px-3 py-1.5 rounded-lg"
-                    style={{ background: 'var(--surface2)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}
+                    style={{
+                      fontSize: 13, padding: '6px 12px', borderRadius: 8,
+                      background: 'var(--fill-3)', color: 'var(--label-2)',
+                      textDecoration: 'none', fontWeight: 500,
+                    }}
                   >
                     보기
                   </a>
-                  <button onClick={() => handleDelete(n.id)} className="btn-danger text-xs py-1.5">
-                    삭제
-                  </button>
+                  <button onClick={() => handleDelete(n.id)} className="btn-danger">삭제</button>
                 </div>
               </div>
             ))}

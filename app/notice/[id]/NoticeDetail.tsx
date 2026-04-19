@@ -29,48 +29,63 @@ async function copyUrl() {
 
 export default function NoticeDetail({ notice }: { notice: Notice }) {
   return (
-    <div>
-      <Link href="/" className="inline-flex items-center gap-1 text-sm mb-5 transition-colors"
-        style={{ color: 'var(--text-muted)' }}>
-        ← 목록으로
-      </Link>
+    <div style={{ padding: '0 16px' }}>
+      {/* Back navigation */}
+      <div style={{ paddingTop: 52, paddingBottom: 16 }}>
+        <Link href="/" style={{
+          display: 'inline-flex', alignItems: 'center', gap: 4,
+          fontSize: 17, color: 'var(--blue)', textDecoration: 'none',
+          fontWeight: 400,
+        }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2}
+            strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+          공지
+        </Link>
+      </div>
 
-      <div className="card p-5">
-        <div className="flex items-center gap-2 mb-3 flex-wrap">
+      {/* Header */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, flexWrap: 'wrap' as const }}>
           {notice.is_pinned && (
-            <span className="text-xs px-2 py-1 rounded-full font-semibold"
-              style={{ background: 'var(--accent-dim)', color: 'var(--accent)' }}>
-              📌 고정
-            </span>
+            <span style={{
+              fontSize: 12, padding: '3px 9px', borderRadius: 100, fontWeight: 600,
+              background: 'rgba(10,132,255,.15)', color: 'var(--blue)',
+            }}>고정</span>
           )}
-          <span className={`text-xs px-2 py-1 rounded-full font-semibold badge-${notice.category}`}>
+          <span
+            className={`badge-${notice.category}`}
+            style={{ fontSize: 12, padding: '3px 9px', borderRadius: 100, fontWeight: 600 }}
+          >
             {CATEGORY_LABEL[notice.category]}
           </span>
         </div>
 
-        <h1 className="text-xl font-bold leading-snug mb-2">{notice.title}</h1>
+        <h1 style={{
+          fontSize: 28, fontWeight: 700, letterSpacing: -0.5,
+          lineHeight: 1.2, marginBottom: 10,
+        }}>
+          {notice.title}
+        </h1>
 
-        <p className="text-xs mb-5" style={{ color: 'var(--text-muted)' }}>
-          {formatDate(notice.created_at)}
-        </p>
-
-        <hr style={{ borderColor: 'var(--border)' }} className="mb-5" />
-
-        <div className="notice-content">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {notice.content}
-          </ReactMarkdown>
-        </div>
+        <p style={{ fontSize: 14, color: 'var(--label-3)' }}>{formatDate(notice.created_at)}</p>
       </div>
 
-      <div className="mt-5">
-        <button
-          onClick={copyUrl}
-          className="w-full btn-primary text-center py-3 text-sm"
-        >
-          🔗 URL 복사 (카카오톡 공유용)
-        </button>
+      {/* Divider */}
+      <div style={{ height: 1, background: 'var(--sep)', marginBottom: 24 }} />
+
+      {/* Content */}
+      <div className="notice-content" style={{ marginBottom: 32 }}>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {notice.content}
+        </ReactMarkdown>
       </div>
+
+      {/* Share button */}
+      <button onClick={copyUrl} className="btn-primary" style={{ marginBottom: 8 }}>
+        URL 복사 (카카오톡 공유용)
+      </button>
     </div>
   )
 }
