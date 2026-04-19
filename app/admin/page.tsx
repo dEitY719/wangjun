@@ -112,23 +112,25 @@ export default function AdminPage() {
     const blocks: string[] = []
     const targets = effectiveTargets()
 
+    const coordLink = (name: string, x: string, y: string) =>
+      (x && y) ? `[${name}](${x},${y})` : `[${name}](죄송, 지도 검색해줘요!)`
+
     if (perTargetCoords && targets.length > 1) {
-      // CoordBadge가 [name](x,y) → "📍 name (x,y)" 로 렌더링하므로 수동 📍 불필요
       const coordLines = targets.map(t => {
         const coord = targetCoords[t] || emptyCoord()
         const actionStr = coord.actions.join(' ')
         const timeStr = perTargetTime ? (targetTimes[t] || schedTime) : ''
-        if (coord.name && coord.x && coord.y) {
-          return `**${t}**: [${coord.name}](${coord.x},${coord.y})${actionStr ? ' ' + actionStr : ''}${timeStr ? ' ⏲ ' + timeStr : ''}`
+        if (coord.name) {
+          return `**${t}**: ${coordLink(coord.name, coord.x, coord.y)}${actionStr ? ' ' + actionStr : ''}${timeStr ? ' ⏲ ' + timeStr : ''}`
         }
-        return `**${t}**: (좌표 미입력)`
+        return `**${t}**: (지역 미입력)`
       })
       blocks.push(coordLines.join('  \n'))
     } else {
       if (targets.length > 0) blocks.push(`대상: ${targets.join(', ')} 맹원분들은`)
-      if (sharedCoord.name && sharedCoord.x && sharedCoord.y) {
+      if (sharedCoord.name) {
         const actionStr = sharedCoord.actions.join(' ')
-        blocks.push(`[${sharedCoord.name}](${sharedCoord.x},${sharedCoord.y})${actionStr ? ' ' + actionStr : ''}`)
+        blocks.push(`${coordLink(sharedCoord.name, sharedCoord.x, sharedCoord.y)}${actionStr ? ' ' + actionStr : ''}`)
       }
     }
 
@@ -470,7 +472,10 @@ export default function AdminPage() {
             {/* ④ 좌표 */}
             <div style={{ background: 'var(--bg-3)', borderRadius: 10, padding: '10px 12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--label-3)' }}>📍 좌표</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--label-3)' }}>📍 좌표</p>
+                  <span style={{ fontSize: 11, color: 'var(--label-3)', opacity: 0.7 }}>X·Y 모르면 생략 가능</span>
+                </div>
                 {showPerTargetToggle && (
                   <label style={{ fontSize: 12, cursor: 'pointer', color: 'var(--label-2)', display: 'flex', alignItems: 'center', gap: 4 }}>
                     <input type="checkbox" checked={perTargetCoords} onChange={(e) => handlePerTargetToggle(e.target.checked)}
@@ -490,13 +495,13 @@ export default function AdminPage() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                           <span style={{ fontSize: 12, fontWeight: 600, padding: '2px 8px', borderRadius: 100, background: 'rgba(10,132,255,0.15)', color: 'var(--blue)' }}>{t}</span>
                           {[
-                            { ph: '지역명', val: coord.name, key: 'name', flex: '2 1 70px' },
-                            { ph: 'X',     val: coord.x,    key: 'x',    flex: '1 1 44px' },
-                            { ph: 'Y',     val: coord.y,    key: 'y',    flex: '1 1 44px' },
-                          ].map(({ ph, val, key, flex }) => (
+                            { ph: '지역명',   val: coord.name, key: 'name', flex: '2 1 70px', optional: false },
+                            { ph: 'X (선택)', val: coord.x,    key: 'x',    flex: '1 1 52px', optional: true  },
+                            { ph: 'Y (선택)', val: coord.y,    key: 'y',    flex: '1 1 52px', optional: true  },
+                          ].map(({ ph, val, key, flex, optional }) => (
                             <input key={ph} type="text" placeholder={ph} value={val}
                               onChange={(e) => updateTargetCoord(t, { [key]: e.target.value })}
-                              style={{ flex, minWidth: 40, padding: '5px 8px', borderRadius: 7, background: 'var(--bg-3)', color: 'var(--label)', border: 'none', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+                              style={{ flex, minWidth: 40, padding: '5px 8px', borderRadius: 7, background: 'var(--bg-3)', color: 'var(--label)', border: 'none', fontSize: 13, outline: 'none', fontFamily: 'inherit', opacity: optional ? 0.7 : 1 }} />
                           ))}
                         </div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
@@ -522,13 +527,13 @@ export default function AdminPage() {
                 <div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
                     {[
-                      { ph: '지역명', val: sharedCoord.name, key: 'name', flex: '2 1 80px' },
-                      { ph: 'X',     val: sharedCoord.x,    key: 'x',    flex: '1 1 48px' },
-                      { ph: 'Y',     val: sharedCoord.y,    key: 'y',    flex: '1 1 48px' },
-                    ].map(({ ph, val, key, flex }) => (
+                      { ph: '지역명',        val: sharedCoord.name, key: 'name', flex: '2 1 80px', optional: false },
+                      { ph: 'X (선택)',      val: sharedCoord.x,    key: 'x',    flex: '1 1 56px', optional: true  },
+                      { ph: 'Y (선택)',      val: sharedCoord.y,    key: 'y',    flex: '1 1 56px', optional: true  },
+                    ].map(({ ph, val, key, flex, optional }) => (
                       <input key={ph} type="text" placeholder={ph} value={val}
                         onChange={(e) => setSharedCoord(c => ({ ...c, [key]: e.target.value }))}
-                        style={{ flex, minWidth: 44, padding: '5px 8px', borderRadius: 7, background: 'var(--bg-4)', color: 'var(--label)', border: 'none', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+                        style={{ flex, minWidth: 44, padding: '5px 8px', borderRadius: 7, background: 'var(--bg-4)', color: 'var(--label)', border: 'none', fontSize: 13, outline: 'none', fontFamily: 'inherit', opacity: optional ? 0.7 : 1 }} />
                     ))}
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
