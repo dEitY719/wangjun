@@ -4,7 +4,7 @@ export type Notice = {
   id: number
   title: string
   content: string
-  category: 'notice' | 'urgent' | 'general'
+  category: 'notice' | 'urgent' | 'general' | 'strategy'
   created_at: string
   is_pinned: boolean
 }

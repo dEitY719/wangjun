@@ -5,7 +5,9 @@ create table notices (
   id bigint generated always as identity primary key,
   title text not null,
   content text not null,
-  category text not null default 'general' check (category in ('notice', 'urgent', 'general')),
+  category text not null default 'general' check (category in ('notice', 'urgent', 'general', 'strategy')),
+  -- strategy 추가 시: ALTER TABLE notices DROP CONSTRAINT notices_category_check;
+  -- ALTER TABLE notices ADD CONSTRAINT notices_category_check CHECK (category IN ('notice','urgent','general','strategy'));
   is_pinned boolean not null default false,
   created_at timestamptz not null default now()
 );

@@ -43,7 +43,8 @@ body {
 /* ── Badges ── */
 .badge-urgent  { background: rgba(255,69,58,.15);  color: var(--red);    }
 .badge-notice  { background: rgba(10,132,255,.15); color: var(--blue);   }
-.badge-general { background: var(--fill-3);        color: var(--label-2);}
+.badge-strategy { background: rgba(255,159,10,.15); color: var(--orange); }
+.badge-general  { background: var(--fill-3);        color: var(--label-2);}
 
 /* ── Buttons ── */
 .btn-primary {

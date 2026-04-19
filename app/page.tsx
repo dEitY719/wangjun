@@ -6,6 +6,7 @@ import type { Notice } from '@/lib/supabase'
 const CATEGORY_LABEL: Record<string, string> = {
   urgent: '긴급',
   notice: '공지',
+  strategy: '전략',
   general: '일반',
 }
 
