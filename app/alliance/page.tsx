@@ -56,8 +56,8 @@ export default function AlliancePage() {
   return (
     <div>
       {/* 연합 배너 */}
-      <div style={{ paddingTop: 52, marginBottom: 16, overflow: 'hidden', aspectRatio: '1786 / 224' }}>
-        <img src="/alliance.png" alt="연합" style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }} />
+      <div style={{ paddingTop: 52, marginBottom: 16 }}>
+        <img src="/alliance.png" alt="연합" style={{ width: '100%', display: 'block' }} />
       </div>
 
       {/* Segmented Control */}
