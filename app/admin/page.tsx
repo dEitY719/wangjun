@@ -67,8 +67,10 @@ export default function AdminPage() {
   const [targetCoords, setTargetCoords]       = useState<Record<string, CoordData>>({})
 
   // 날짜/시간
-  const [schedDate, setSchedDate] = useState(nowDate)
-  const [schedTime, setSchedTime] = useState(nowTime)
+  const [schedDate, setSchedDate]       = useState(nowDate)
+  const [schedTime, setSchedTime]       = useState(nowTime)
+  const [perTargetTime, setPerTargetTime] = useState(false)
+  const [targetTimes, setTargetTimes]   = useState<Record<string, string>>({})
 
   // 추가 메모
   const [extraContent, setExtraContent] = useState('')
@@ -107,40 +109,36 @@ export default function AdminPage() {
     category === 'general' ? customTitle.trim() : CATEGORY_AUTO_TITLE[category]
 
   const buildContent = (): string => {
-    const lines: string[] = []
+    const blocks: string[] = []
     const targets = effectiveTargets()
 
     if (perTargetCoords && targets.length > 1) {
-      targets.forEach(t => {
+      // CoordBadge가 [name](x,y) → "📍 name (x,y)" 로 렌더링하므로 수동 📍 불필요
+      const coordLines = targets.map(t => {
         const coord = targetCoords[t] || emptyCoord()
+        const actionStr = coord.actions.join(' ')
+        const timeStr = perTargetTime ? (targetTimes[t] || schedTime) : ''
         if (coord.name && coord.x && coord.y) {
-          const actionStr = coord.actions.join(' ')
-          lines.push(`📍 ${t}: [${coord.name}](${coord.x},${coord.y})${actionStr ? ' ' + actionStr : ''}`)
-        } else {
-          lines.push(`📍 ${t}: (좌표 미입력)`)
+          return `**${t}**: [${coord.name}](${coord.x},${coord.y})${actionStr ? ' ' + actionStr : ''}${timeStr ? ' ⏲ ' + timeStr : ''}`
         }
+        return `**${t}**: (좌표 미입력)`
       })
+      blocks.push(coordLines.join('  \n'))
     } else {
-      if (targets.length > 0) {
-        lines.push(`대상: ${targets.join(', ')} 맹원분들은`)
-        lines.push('')
-      }
+      if (targets.length > 0) blocks.push(`대상: ${targets.join(', ')} 맹원분들은`)
       if (sharedCoord.name && sharedCoord.x && sharedCoord.y) {
         const actionStr = sharedCoord.actions.join(' ')
-        lines.push(`📍[${sharedCoord.name}](${sharedCoord.x},${sharedCoord.y})${actionStr ? ' ' + actionStr : ''}`)
+        blocks.push(`[${sharedCoord.name}](${sharedCoord.x},${sharedCoord.y})${actionStr ? ' ' + actionStr : ''}`)
       }
     }
 
     const dateStr = schedDate ? `📆 ${schedDate.slice(2).replace(/-/g, '-')}` : ''
-    const timeStr = schedTime ? `⏲ ${schedTime}` : ''
-    if (dateStr || timeStr) lines.push(`${dateStr} ${timeStr}`.trim())
+    const sharedTimeStr = (!perTargetTime || !perTargetCoords || targets.length <= 1) && schedTime ? `⏲ ${schedTime}` : ''
+    if (dateStr || sharedTimeStr) blocks.push(`${dateStr}${sharedTimeStr ? ' ' + sharedTimeStr : ''}`.trim())
 
-    if (extraContent.trim()) {
-      lines.push('')
-      lines.push(extraContent.trim())
-    }
+    if (extraContent.trim()) blocks.push(extraContent.trim())
 
-    return lines.join('\n')
+    return blocks.join('\n\n')
   }
 
   const adminPassword = auth.password || passwordInput
@@ -155,6 +153,8 @@ export default function AdminPage() {
     setTargetCoords({})
     setSchedDate(nowDate())
     setSchedTime(nowTime())
+    setPerTargetTime(false)
+    setTargetTimes({})
     setExtraContent('')
     setIsPinned(false)
     setPreviewMode(false)
@@ -181,6 +181,8 @@ export default function AdminPage() {
     setTargetCoords({})
     setSchedDate(nowDate())
     setSchedTime(nowTime())
+    setPerTargetTime(false)
+    setTargetTimes({})
     setPreviewMode(false)
     setSubmitMsg('')
     requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
@@ -497,7 +499,7 @@ export default function AdminPage() {
                               style={{ flex, minWidth: 40, padding: '5px 8px', borderRadius: 7, background: 'var(--bg-3)', color: 'var(--label)', border: 'none', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
                           ))}
                         </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
                           {COORD_ACTIONS.map(a => (
                             <label key={a} style={{ fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3 }}>
                               <input type="checkbox" checked={coord.actions.includes(a)} onChange={() => toggleTargetAction(t, a)}
@@ -505,6 +507,11 @@ export default function AdminPage() {
                               {a}
                             </label>
                           ))}
+                          {perTargetTime && (
+                            <input type="time" value={targetTimes[t] ?? schedTime}
+                              onChange={(e) => setTargetTimes(tt => ({ ...tt, [t]: e.target.value }))}
+                              style={{ marginLeft: 4, padding: '3px 6px', borderRadius: 7, background: 'var(--bg-3)', color: 'var(--label)', border: 'none', fontSize: 12, outline: 'none', fontFamily: 'inherit' }} />
+                          )}
                         </div>
                       </div>
                     )
@@ -538,13 +545,25 @@ export default function AdminPage() {
             </div>
 
             {/* ⑤ 날짜 & 시간 */}
-            <div style={{ background: 'var(--bg-3)', borderRadius: 10, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--label-3)' }}>📆 날짜</span>
-              <input type="date" value={schedDate} onChange={(e) => setSchedDate(e.target.value)}
-                style={{ padding: '5px 8px', borderRadius: 7, background: 'var(--bg-4)', color: 'var(--label)', border: 'none', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
-              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--label-3)' }}>⏲ 시간</span>
-              <input type="time" value={schedTime} onChange={(e) => setSchedTime(e.target.value)}
-                style={{ padding: '5px 8px', borderRadius: 7, background: 'var(--bg-4)', color: 'var(--label)', border: 'none', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+            <div style={{ background: 'var(--bg-3)', borderRadius: 10, padding: '10px 12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--label-3)' }}>📆 날짜</span>
+                <input type="date" value={schedDate} onChange={(e) => setSchedDate(e.target.value)}
+                  style={{ padding: '5px 8px', borderRadius: 7, background: 'var(--bg-4)', color: 'var(--label)', border: 'none', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--label-3)' }}>⏲ 시간</span>
+                <input type="time" value={schedTime} onChange={(e) => setSchedTime(e.target.value)}
+                  style={{ padding: '5px 8px', borderRadius: 7, background: 'var(--bg-4)', color: 'var(--label)', border: 'none', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+                {showPerTargetToggle && perTargetCoords && (
+                  <label style={{ fontSize: 12, cursor: 'pointer', color: 'var(--label-2)', display: 'flex', alignItems: 'center', gap: 4, marginLeft: 4 }}>
+                    <input type="checkbox" checked={perTargetTime} onChange={(e) => setPerTargetTime(e.target.checked)}
+                      style={{ accentColor: 'var(--blue)' }} />
+                    대상별 다르게
+                  </label>
+                )}
+              </div>
+              {perTargetTime && perTargetCoords && showPerTargetToggle && (
+                <p style={{ fontSize: 11, color: 'var(--label-3)', marginTop: 6 }}>각 대상 좌표 행에서 시간을 개별 설정하세요</p>
+              )}
             </div>
 
             {/* ⑥ 추가 메모 + 미리보기 */}
