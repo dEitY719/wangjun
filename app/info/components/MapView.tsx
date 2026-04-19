@@ -42,7 +42,7 @@ export default function MapView() {
   ]
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 180px)', minHeight: 360 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       {/* Map */}
       <MapCanvas castles={data.castles} />
 

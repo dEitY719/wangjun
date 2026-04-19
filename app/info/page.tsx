@@ -18,14 +18,14 @@ export default function InfoPage() {
   const [tab, setTab] = useState<InfoTab>('관청Lv')
 
   return (
-    <div>
+    <div style={tab === '지도' ? { display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden' } : {}}>
       {/* Large Title */}
-      <div style={{ padding: '52px 20px 20px' }}>
+      <div style={{ padding: '52px 20px 20px', flexShrink: 0 }}>
         <h1 style={{ fontSize: 34, fontWeight: 700, letterSpacing: -0.5, lineHeight: 1.1 }}>정보</h1>
       </div>
 
       {/* Segmented Control */}
-      <div style={{ padding: '0 16px 20px' }}>
+      <div style={{ padding: '0 16px 12px', flexShrink: 0 }}>
         <div className="seg-control">
           {TABS.map((t) => (
             <button key={t} className={`seg-btn${tab === t ? ' active' : ''}`} onClick={() => setTab(t)}>

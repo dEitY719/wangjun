@@ -104,7 +104,7 @@ export default function MapCanvas({ castles }: Props) {
   const showLabels = zoom >= 1.2
 
   return (
-    <div style={{ position: 'relative', overflow: 'hidden', flex: 1 }}>
+    <div style={{ position: 'relative', overflow: 'hidden', flex: 1, minHeight: 0 }}>
       {/* Map container */}
       <div
         ref={containerRef}
