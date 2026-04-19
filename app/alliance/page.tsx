@@ -28,9 +28,10 @@ type OAlliance = {
 }
 
 const CHUK: Alliance[] = [
-  { rank: 1, name: '한나라',   leader: '손권',  command: '적토마', diplomat: '칭다오' },
-  { rank: 2, name: '대한제국', leader: 'DIOR',  command: '제1군' },
-  { rank: 3, name: '호표기',   leader: '비키',  command: '꽌우' },
+  { rank: 1, name: '한나라',   leader: '손권',   command: '적토마', diplomat: '칭다오' },
+  { rank: 2, name: '대한제국', leader: 'DIOR',   command: '제1군' },
+  { rank: 3, name: '호표기',   leader: '비키거라', command: '꽌우' },
+  { rank: 4, name: '곽회사단', leader: '간호사',  command: '김관장' },
 ]
 
 const O_DATA: OAlliance[] = [
