@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import MarkdownRenderer from '@/app/components/MarkdownRenderer'
+import { useAdminAuth } from '@/app/hooks/useAdminAuth'
 import type { Notice } from '@/lib/supabase'
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -30,9 +31,12 @@ function formatDate(iso: string) {
 }
 
 export default function AdminPage() {
-  const [password, setPassword]   = useState('')
-  const [authed, setAuthed]       = useState(false)
-  const [authError, setAuthError] = useState('')
+  const auth = useAdminAuth()
+
+  // 로그인 폼 전용 상태 (auth.password는 sessionStorage 저장값)
+  const [passwordInput, setPasswordInput] = useState('')
+  const [authed, setAuthed]               = useState(false)
+  const [authError, setAuthError]         = useState('')
 
   const [notices, setNotices]     = useState<Notice[]>([])
   const [loading, setLoading]     = useState(false)
@@ -62,16 +66,52 @@ export default function AdminPage() {
     setLoading(false)
   }, [])
 
+  // sessionStorage에 저장된 세션이 있으면 자동 로그인
+  useEffect(() => {
+    if (auth.ready && auth.isAdmin && !authed) {
+      setAuthed(true)
+      fetchNotices()
+    }
+  }, [auth.ready, auth.isAdmin, authed, fetchNotices])
+
+  // ?edit=ID 파라미터 처리 — 공지 상세에서 수정 버튼 클릭 시
+  useEffect(() => {
+    if (!authed) return
+    const editId = new URLSearchParams(window.location.search).get('edit')
+    if (!editId) return
+    fetch(`/api/notices/${editId}`)
+      .then((r) => r.json())
+      .then((n: Notice) => {
+        if (!n.id) return
+        setEditingId(n.id)
+        setTitle(n.title)
+        setContent(n.content)
+        setCategory(n.category)
+        setIsPinned(n.is_pinned)
+        setEditorTab('write')
+        window.history.replaceState({}, '', '/admin')
+        requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+      })
+      .catch(() => {})
+  }, [authed])
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
     const res = await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ password: passwordInput }),
     })
-    if (res.ok) { setAuthed(true); setAuthError(''); fetchNotices() }
-    else setAuthError('비밀번호가 틀렸습니다')
+    if (res.ok) {
+      auth.saveAuth(passwordInput)  // sessionStorage에 저장 → 다른 페이지에서도 인식
+      setAuthed(true); setAuthError(''); fetchNotices()
+    } else {
+      setAuthError('비밀번호가 틀렸습니다')
+    }
   }
+
+  // API 호출에 쓸 비밀번호 (sessionStorage 저장값 우선)
+  const adminPassword = auth.password || passwordInput
 
   const resetForm = () => {
     setEditingId(null); setTitle(''); setContent('')
@@ -98,7 +138,7 @@ export default function AdminPage() {
     const isEdit = editingId !== null
     const res = await fetch(isEdit ? `/api/notices/${editingId}` : '/api/notices', {
       method: isEdit ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-admin-password': password },
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
       body: JSON.stringify({ title, content, category, is_pinned: isPinned }),
     })
 
@@ -116,7 +156,7 @@ export default function AdminPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm('삭제하시겠습니까?')) return
-    await fetch(`/api/notices/${id}`, { method: 'DELETE', headers: { 'x-admin-password': password } })
+    await fetch(`/api/notices/${id}`, { method: 'DELETE', headers: { 'x-admin-password': adminPassword } })
     if (editingId === id) resetForm()
     fetchNotices()
   }
@@ -141,14 +181,16 @@ export default function AdminPage() {
   }
 
   /* ── Login ── */
+  if (!auth.ready) return null  // sessionStorage 로드 대기
+
   if (!authed) {
     return (
       <div style={{ padding: '52px 16px 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <div style={{ width: '100%', maxWidth: 360 }}>
           <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: -0.5, marginBottom: 32, textAlign: 'center' }}>관리자 로그인</h1>
           <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <input type="password" placeholder="관리자 비밀번호" value={password}
-              onChange={(e) => setPassword(e.target.value)} className="ios-input" />
+            <input type="password" placeholder="관리자 비밀번호" value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)} className="ios-input" />
             {authError && <p style={{ fontSize: 14, color: 'var(--red)', textAlign: 'center' }}>{authError}</p>}
             <button type="submit" className="btn-primary" style={{ marginTop: 4 }}>입장</button>
           </form>
@@ -165,7 +207,7 @@ export default function AdminPage() {
         <h1 style={{ fontSize: 34, fontWeight: 700, letterSpacing: -0.5, lineHeight: 1.1 }}>관리</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 4 }}>
           <span style={{ fontSize: 13, color: 'var(--label-3)' }}>비밀번호</span>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+          <input type="password" value={auth.password} onChange={(e) => auth.saveAuth(e.target.value)}
             className="ios-input" style={{ width: 100, padding: '7px 12px', fontSize: 14, borderRadius: 8 }} />
         </div>
       </div>
