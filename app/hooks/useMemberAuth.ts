@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 export type MemberSession = {
   id: string
@@ -10,17 +10,17 @@ export type MemberSession = {
 
 const KEY = 'member_session'
 
-export function useMemberAuth() {
-  const [session, setSession] = useState<MemberSession | null>(null)
-  const [ready, setReady]     = useState(false)
+function readSession(): MemberSession | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = sessionStorage.getItem(KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch { return null }
+}
 
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(KEY)
-      if (raw) setSession(JSON.parse(raw))
-    } catch {}
-    setReady(true)
-  }, [])
+export function useMemberAuth() {
+  const [session, setSession] = useState<MemberSession | null>(readSession)
+  const [ready] = useState(true)
 
   const login = (s: MemberSession) => {
     sessionStorage.setItem(KEY, JSON.stringify(s))

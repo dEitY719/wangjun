@@ -1,17 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useMemberAuth } from '@/app/hooks/useMemberAuth'
 
 const SESSION_KEY = 'passphrase_ok'
 
 export function usePassphraseVerified() {
-  const [verified, setVerified] = useState<boolean | null>(null)
-
-  useEffect(() => {
-    const ok = sessionStorage.getItem(SESSION_KEY) === 'true'
-    setVerified(ok)
-  }, [])
+  const [verified, setVerified] = useState<boolean | null>(() =>
+    typeof window === 'undefined' ? null : sessionStorage.getItem(SESSION_KEY) === 'true'
+  )
 
   const markVerified = () => {
     sessionStorage.setItem(SESSION_KEY, 'true')

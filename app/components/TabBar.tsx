@@ -63,8 +63,8 @@ export default function TabBar() {
   const pathname = usePathname()
 
   function isActive(href: string) {
-    if (href === '/') return pathname === '/' || pathname.startsWith('/notice')
-    return pathname.startsWith(href)
+    if (href === '/') return pathname === '/' || (pathname?.startsWith('/notice') ?? false)
+    return pathname?.startsWith(href) ?? false
   }
 
   return (

@@ -44,7 +44,7 @@ export default function AdminPage() {
   const auth = useAdminAuth()
 
   const [passwordInput, setPasswordInput] = useState('')
-  const [authed, setAuthed]               = useState(false)
+  const authed = auth.ready && auth.isAdmin
   const [authError, setAuthError]         = useState('')
 
   const [notices, setNotices]   = useState<Notice[]>([])
@@ -145,13 +145,15 @@ export default function AdminPage() {
   }
 
   useEffect(() => {
-    if (auth.ready && auth.isAdmin && !authed) {
-      setAuthed(true)
-      fetchNotices()
-      fetchMembers(auth.password)
-      fetchPassphrase(auth.password)
-    }
-  }, [auth.ready, auth.isAdmin, authed, fetchNotices, fetchMembers, fetchPassphrase, auth.password])
+    if (!authed) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchNotices()
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchMembers(auth.password)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchPassphrase(auth.password)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authed])
 
   // 파생 계산
   const effectiveTargets = (): string[] => {
@@ -272,7 +274,7 @@ export default function AdminPage() {
     })
     if (res.ok) {
       auth.saveAuth(passwordInput)
-      setAuthed(true); setAuthError('')
+      setAuthError('')
       fetchNotices(); fetchMembers(passwordInput); fetchPassphrase(passwordInput)
     } else {
       setAuthError('비밀번호가 틀렸습니다')

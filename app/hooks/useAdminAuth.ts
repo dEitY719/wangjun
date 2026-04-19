@@ -1,19 +1,17 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 const SESSION_KEY = 'wj_admin_pw'
 
 export function useAdminAuth() {
-  const [password, setPassword] = useState('')
-  const [isAdmin, setIsAdmin]   = useState(false)
-  const [ready, setReady]       = useState(false)
-
-  useEffect(() => {
-    const stored = sessionStorage.getItem(SESSION_KEY) ?? ''
-    if (stored) { setPassword(stored); setIsAdmin(true) }
-    setReady(true)
-  }, [])
+  const [password, setPassword] = useState(() =>
+    typeof window === 'undefined' ? '' : (sessionStorage.getItem(SESSION_KEY) ?? '')
+  )
+  const [isAdmin, setIsAdmin] = useState(() =>
+    typeof window === 'undefined' ? false : !!sessionStorage.getItem(SESSION_KEY)
+  )
+  const [ready] = useState(true)
 
   const saveAuth = (pw: string) => {
     sessionStorage.setItem(SESSION_KEY, pw)
