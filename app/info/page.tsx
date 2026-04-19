@@ -46,11 +46,9 @@ export default function InfoPage() {
       {/* 관청Lv */}
       {tab === '관청Lv' && (
         <div style={{ padding: '0 16px' }}>
-          <img
-            src="/office.png"
-            alt="관청"
-            style={{ width: '100%', borderRadius: 12, display: 'block', marginBottom: 16, objectFit: 'cover' }}
-          />
+          <div style={{ overflow: 'hidden', borderRadius: 12, marginBottom: 16, aspectRatio: '870 / 286' }}>
+            <img src="/office.png" alt="관청" style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }} />
+          </div>
           <p style={{ fontSize: 13, color: 'var(--label-3)', marginBottom: 12, padding: '0 4px' }}>
             관청 N레벨 달성 조건 — 아래 건물들이 모두{' '}
             <span style={{ color: 'var(--blue)', fontWeight: 600 }}>N-1레벨</span> 이상이어야 합니다
