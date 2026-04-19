@@ -34,7 +34,7 @@ function CoordMissingBadge({ name }: { name: string }) {
       fontWeight: 600, fontSize: '0.88em', verticalAlign: 'middle', whiteSpace: 'nowrap',
     }}>
       📍 {name}
-      <span style={{ fontSize: '0.82em', opacity: 0.65, fontWeight: 400 }}>좌표 검색해줘요 😅</span>
+      <span style={{ fontSize: '0.82em', opacity: 0.65, fontWeight: 400 }}>전체지도에서 검색🔎</span>
     </span>
   )
 }

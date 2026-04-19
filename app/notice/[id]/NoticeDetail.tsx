@@ -36,6 +36,8 @@ function markdownToKakao(title: string, md: string): string {
     .replace(/~~(.+?)~~/g, '$1')
     // 좌표 링크 [지역명](x,y) → 📍지역명(x,y)
     .replace(/\[([^\]]+)\]\((\d+),(\d+)\)/g, '📍$1($2,$3)')
+    // 좌표 미입력 링크 [지역명](map-search) → 📍지역명
+    .replace(/\[([^\]]+)\]\(map-search\)/g, '📍$1')
     // 일반 링크
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
     // 인용구 (> ...)

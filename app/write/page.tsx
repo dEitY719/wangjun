@@ -7,6 +7,7 @@ import { useMemberAuth } from '@/app/hooks/useMemberAuth'
 
 type CategoryType = 'notice' | 'urgent' | 'general' | 'strategy'
 type CoordData = { name: string; x: string; y: string; actions: string[] }
+type Template = { name: string; title: string; category: string; time: string; body: string }
 
 const CATEGORY_LABEL: Record<string, string> = { urgent: '긴급', notice: '공지', strategy: '전략', general: '일반' }
 const CATEGORY_AUTO_TITLE: Record<string, string> = { urgent: '🚨 긴급', notice: '📢 공지', strategy: '⚔️ 전략', general: '' }
@@ -40,11 +41,59 @@ export default function WritePage() {
   const [submitting, setSubmitting]     = useState(false)
   const [submitMsg, setSubmitMsg]       = useState('')
 
+  const [templates, setTemplates]       = useState<Template[]>([])
+  const [showTemplates, setShowTemplates] = useState(false)
+  const [saveName, setSaveName]         = useState('')
+  const [showSaveInput, setShowSaveInput] = useState(false)
+  const [templateMsg, setTemplateMsg]   = useState('')
+
   const formRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (ready && !session) router.replace('/')
   }, [ready, session, router])
+
+  const loadTemplates = async () => {
+    const res = await fetch('/api/templates')
+    if (res.ok) setTemplates(await res.json())
+  }
+
+  const applyTemplate = (t: Template) => {
+    if (t.category && ['notice','urgent','strategy','general'].includes(t.category))
+      setCategory(t.category as CategoryType)
+    if (t.time) setSchedTime(t.time)
+    setExtraContent(t.body)
+    setShowTemplates(false)
+    setPreviewMode(false)
+  }
+
+  const saveTemplate = async () => {
+    if (!saveName.trim()) return
+    const finalTitle = getFinalTitle()
+    const res = await fetch('/api/templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify({ name: saveName.trim(), title: finalTitle, category, time: schedTime, body: extraContent }),
+    })
+    if (res.ok) {
+      setTemplateMsg('저장됨')
+      setSaveName(''); setShowSaveInput(false)
+      setTimeout(() => setTemplateMsg(''), 2000)
+    } else {
+      setTemplateMsg('저장 실패')
+      setTimeout(() => setTemplateMsg(''), 2000)
+    }
+  }
+
+  const deleteTemplate = async (name: string) => {
+    if (!confirm(`"${name}" 템플릿을 삭제할까요?`)) return
+    await fetch('/api/templates', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify({ name }),
+    })
+    setTemplates(ts => ts.filter(t => t.name !== name))
+  }
 
   if (!ready || !session) return null
 
@@ -59,7 +108,7 @@ export default function WritePage() {
   const getFinalTitle = () => category === 'general' ? customTitle.trim() : CATEGORY_AUTO_TITLE[category]
 
   const coordLink = (name: string, x: string, y: string) =>
-    (x && y) ? `[${name}](${x},${y})` : `[${name}](죄송, 지도 검색해줘요!)`
+    (x && y) ? `[${name}](${x},${y})` : `[${name}](map-search)`
 
   const buildContent = (): string => {
     const blocks: string[] = []
@@ -280,8 +329,67 @@ export default function WritePage() {
                     </button>
                   ))}
                 </div>
+                {/* 템플릿 버튼 */}
+                <button type="button" onClick={() => { setShowTemplates(v => !v); if (!showTemplates) loadTemplates() }}
+                  style={{ fontSize: 12, padding: '4px 10px', borderRadius: 8, border: 'none', background: showTemplates ? 'rgba(10,132,255,0.18)' : 'var(--bg-3)', color: showTemplates ? 'var(--blue)' : 'var(--label-2)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
+                  📋 템플릿
+                </button>
                 <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--label-3)' }}>{extraContent.length}자</span>
               </div>
+
+              {/* 템플릿 패널 */}
+              {showTemplates && (
+                <div style={{ background: 'var(--bg-3)', borderRadius: 10, padding: '10px 12px', marginBottom: 8 }}>
+                  {templates.length === 0 ? (
+                    <p style={{ fontSize: 13, color: 'var(--label-3)', textAlign: 'center', padding: '8px 0' }}>저장된 템플릿이 없습니다</p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
+                      {templates.map(t => (
+                        <div key={t.name} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-4)', borderRadius: 8, padding: '8px 10px' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <span style={{ fontSize: 13, fontWeight: 600 }}>{t.name}</span>
+                            <span style={{ fontSize: 11, color: 'var(--label-3)', marginLeft: 6 }}>{t.title}{t.time ? ` ⏲ ${t.time}` : ''}</span>
+                          </div>
+                          <button type="button" onClick={() => applyTemplate(t)}
+                            style={{ fontSize: 12, padding: '4px 10px', borderRadius: 7, border: 'none', background: 'rgba(10,132,255,0.15)', color: 'var(--blue)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, flexShrink: 0 }}>
+                            불러오기
+                          </button>
+                          <button type="button" onClick={() => deleteTemplate(t.name)}
+                            style={{ fontSize: 12, padding: '4px 8px', borderRadius: 7, border: 'none', background: 'rgba(255,69,58,0.12)', color: 'var(--red)', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+                            삭제
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {/* 현재 내용 저장 */}
+                  {showSaveInput ? (
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                      <input
+                        type="text" placeholder="템플릿 이름" value={saveName}
+                        onChange={e => setSaveName(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && saveTemplate()}
+                        autoFocus
+                        style={{ flex: 1, padding: '6px 10px', borderRadius: 7, background: 'var(--bg-4)', color: 'var(--label)', border: 'none', fontSize: 13, outline: 'none', fontFamily: 'inherit' }}
+                      />
+                      <button type="button" onClick={saveTemplate}
+                        style={{ fontSize: 12, padding: '6px 12px', borderRadius: 7, border: 'none', background: 'rgba(48,209,88,0.18)', color: 'var(--green)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
+                        저장
+                      </button>
+                      <button type="button" onClick={() => { setShowSaveInput(false); setSaveName('') }}
+                        style={{ fontSize: 12, padding: '6px 8px', borderRadius: 7, border: 'none', background: 'none', color: 'var(--label-3)', cursor: 'pointer', fontFamily: 'inherit' }}>
+                        취소
+                      </button>
+                    </div>
+                  ) : (
+                    <button type="button" onClick={() => setShowSaveInput(true)}
+                      style={{ width: '100%', fontSize: 13, padding: '7px', borderRadius: 8, border: '1.5px dashed var(--sep)', background: 'none', color: 'var(--label-3)', cursor: 'pointer', fontFamily: 'inherit' }}>
+                      + 현재 메모를 템플릿으로 저장
+                    </button>
+                  )}
+                  {templateMsg && <p style={{ fontSize: 12, color: templateMsg.includes('실패') ? 'var(--red)' : 'var(--green)', textAlign: 'center', marginTop: 6 }}>{templateMsg}</p>}
+                </div>
+              )}
               {!previewMode
                 ? <textarea placeholder="추가로 전달할 내용을 입력하세요..." value={extraContent} onChange={e => setExtraContent(e.target.value)}
                     rows={5} className="ios-input" style={{ resize: 'vertical', fontFamily: "'SF Mono','Menlo',monospace", fontSize: 14, lineHeight: 1.7 }} />
