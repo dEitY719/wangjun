@@ -13,6 +13,31 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
   return NextResponse.json(data)
 }
 
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const password = req.headers.get('x-admin-password')
+  if (password !== process.env.ADMIN_PASSWORD) {
+    return NextResponse.json({ error: '인증 실패' }, { status: 401 })
+  }
+
+  const body = await req.json()
+  const { title, content, category, is_pinned } = body
+
+  if (!title?.trim() || !content?.trim()) {
+    return NextResponse.json({ error: '제목과 내용을 입력하세요' }, { status: 400 })
+  }
+
+  const { data, error } = await getSupabase()
+    .from('notices')
+    .update({ title, content, category, is_pinned: is_pinned || false })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json(data)
+}
+
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const password = req.headers.get('x-admin-password')
