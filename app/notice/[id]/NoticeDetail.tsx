@@ -1,8 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import MarkdownRenderer from '@/app/components/MarkdownRenderer'
 import type { Notice } from '@/lib/supabase'
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -77,9 +76,7 @@ export default function NoticeDetail({ notice }: { notice: Notice }) {
 
       {/* Content */}
       <div className="notice-content" style={{ marginBottom: 32 }}>
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-          {notice.content}
-        </ReactMarkdown>
+        <MarkdownRenderer>{notice.content}</MarkdownRenderer>
       </div>
 
       {/* Share button */}

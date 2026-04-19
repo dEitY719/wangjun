@@ -1,8 +1,7 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import { useState, useCallback, useRef } from 'react'
+import MarkdownRenderer from '@/app/components/MarkdownRenderer'
 import type { Notice } from '@/lib/supabase'
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -10,6 +9,19 @@ const CATEGORY_LABEL: Record<string, string> = {
   notice: '공지',
   general: '일반',
 }
+
+const DEFAULT_TEMPLATE = `## 공지 내용
+
+[지역명](x좌표,y좌표) 주변으로 집결하세요.
+
+## 상세 정보
+
+| 항목 | 내용 |
+|------|------|
+| 집결 장소 | [지역명](x좌표,y좌표) |
+| 집결 시간 | |
+| 주의 사항 | |
+`
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('ko-KR', {
@@ -32,6 +44,12 @@ export default function AdminPage() {
   const [submitting, setSubmitting] = useState(false)
   const [submitMsg, setSubmitMsg] = useState('')
   const [editorTab, setEditorTab] = useState<'write' | 'preview'>('write')
+
+  // 좌표 삽입 헬퍼 상태
+  const [coordName, setCoordName] = useState('')
+  const [coordX, setCoordX]       = useState('')
+  const [coordY, setCoordY]       = useState('')
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const fetchNotices = useCallback(async () => {
     setLoading(true)
@@ -94,13 +112,37 @@ export default function AdminPage() {
     fetchNotices()
   }
 
+  // 커서 위치에 텍스트 삽입
+  const insertAtCursor = (text: string) => {
+    const ta = textareaRef.current
+    if (!ta) { setContent((c) => c + text); return }
+    const start = ta.selectionStart
+    const end   = ta.selectionEnd
+    const next  = content.slice(0, start) + text + content.slice(end)
+    setContent(next)
+    requestAnimationFrame(() => {
+      ta.selectionStart = ta.selectionEnd = start + text.length
+      ta.focus()
+    })
+  }
+
+  const handleInsertCoord = () => {
+    if (!coordName.trim() || !coordX.trim() || !coordY.trim()) return
+    insertAtCursor(`[${coordName.trim()}](${coordX.trim()},${coordY.trim()})`)
+    setCoordName(''); setCoordX(''); setCoordY('')
+  }
+
+  const handleCoordKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleInsertCoord()
+  }
+
   /* ── Login screen ── */
   if (!authed) {
     return (
-      <div style={{ padding: '52px 16px 0', display: 'flex', flexDirection: 'column' as const, alignItems: 'center' }}>
+      <div style={{ padding: '52px 16px 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <div style={{ width: '100%', maxWidth: 360 }}>
           <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: -0.5, marginBottom: 32, textAlign: 'center' }}>관리자 로그인</h1>
-          <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column' as const, gap: 12 }}>
+          <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <input
               type="password"
               placeholder="관리자 비밀번호"
@@ -140,7 +182,7 @@ export default function AdminPage() {
       <div style={{ margin: '0 16px 24px' }}>
         <div style={{ background: 'var(--bg-2)', borderRadius: 12, padding: '18px 16px' }}>
           <h2 style={{ fontSize: 17, fontWeight: 600, marginBottom: 16, letterSpacing: -0.2 }}>공지 작성</h2>
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column' as const, gap: 12 }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
             {/* Category + pin */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -160,7 +202,7 @@ export default function AdminPage() {
                   </button>
                 ))}
               </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, cursor: 'pointer', color: 'var(--label-2)', whiteSpace: 'nowrap' as const }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, cursor: 'pointer', color: 'var(--label-2)', whiteSpace: 'nowrap' }}>
                 <input
                   type="checkbox"
                   checked={isPinned}
@@ -180,7 +222,70 @@ export default function AdminPage() {
               className="ios-input"
             />
 
-            {/* Editor tabs */}
+            {/* ── 좌표 삽입 헬퍼 ── */}
+            <div style={{
+              background: 'var(--bg-3)',
+              borderRadius: 10,
+              padding: '10px 12px',
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: 6,
+            }}>
+              <span style={{ fontSize: 12, color: 'var(--label-3)', fontWeight: 600, minWidth: 60 }}>📍 좌표 삽입</span>
+              <input
+                type="text"
+                placeholder="지역명"
+                value={coordName}
+                onChange={(e) => setCoordName(e.target.value)}
+                onKeyDown={handleCoordKeyDown}
+                style={{
+                  flex: '2 1 80px', minWidth: 60, padding: '5px 10px', borderRadius: 7,
+                  background: 'var(--bg-4)', color: 'var(--label)', border: 'none',
+                  fontSize: 13, outline: 'none', fontFamily: 'inherit',
+                }}
+              />
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="X"
+                value={coordX}
+                onChange={(e) => setCoordX(e.target.value)}
+                onKeyDown={handleCoordKeyDown}
+                style={{
+                  flex: '1 1 48px', minWidth: 44, padding: '5px 8px', borderRadius: 7,
+                  background: 'var(--bg-4)', color: 'var(--label)', border: 'none',
+                  fontSize: 13, outline: 'none', fontFamily: 'inherit',
+                }}
+              />
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="Y"
+                value={coordY}
+                onChange={(e) => setCoordY(e.target.value)}
+                onKeyDown={handleCoordKeyDown}
+                style={{
+                  flex: '1 1 48px', minWidth: 44, padding: '5px 8px', borderRadius: 7,
+                  background: 'var(--bg-4)', color: 'var(--label)', border: 'none',
+                  fontSize: 13, outline: 'none', fontFamily: 'inherit',
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleInsertCoord}
+                style={{
+                  padding: '5px 12px', borderRadius: 7, border: 'none', cursor: 'pointer',
+                  background: 'rgba(10,132,255,0.2)', color: 'var(--blue)',
+                  fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
+                  opacity: (coordName && coordX && coordY) ? 1 : 0.4,
+                }}
+              >
+                삽입
+              </button>
+            </div>
+
+            {/* Editor tabs + template button */}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <div className="seg-control" style={{ width: 180 }}>
@@ -191,6 +296,17 @@ export default function AdminPage() {
                     </button>
                   ))}
                 </div>
+                <button
+                  type="button"
+                  onClick={() => { setContent(DEFAULT_TEMPLATE); setEditorTab('write') }}
+                  style={{
+                    fontSize: 12, padding: '5px 10px', borderRadius: 7, border: 'none',
+                    background: 'var(--fill-3)', color: 'var(--label-2)',
+                    cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500,
+                  }}
+                >
+                  기본 템플릿
+                </button>
                 <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--label-3)' }}>
                   {content.length}자 · {content.split('\n').length}줄
                 </span>
@@ -198,7 +314,8 @@ export default function AdminPage() {
 
               {editorTab === 'write' ? (
                 <textarea
-                  placeholder={`마크다운 지원\n\n**굵게**, *기울임*, ~~취소선~~\n# 제목, ## 소제목\n- 목록 항목\n> 인용구\n\`코드\``}
+                  ref={textareaRef}
+                  placeholder={`마크다운 지원\n\n**굵게**, *기울임*, ~~취소선~~\n# 제목, ## 소제목\n- 목록 항목\n> 인용구\n\`코드\`\n\n좌표: [낙양](1247,873)`}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   rows={10}
@@ -208,7 +325,7 @@ export default function AdminPage() {
               ) : (
                 <div className="notice-content ios-input" style={{ minHeight: 240, fontSize: 15 }}>
                   {content.trim()
-                    ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+                    ? <MarkdownRenderer>{content}</MarkdownRenderer>
                     : <span style={{ color: 'var(--label-3)' }}>내용을 입력하면 미리보기가 표시됩니다</span>
                   }
                 </div>
@@ -220,8 +337,8 @@ export default function AdminPage() {
                 fontSize: 14, fontWeight: 500, textAlign: 'center',
                 color: submitMsg === 'success' ? 'var(--green)' : 'var(--red)',
               }}>
-                {submitMsg === 'success'   ? '공지가 등록되었습니다!'    :
-                 submitMsg === 'error-auth' ? '비밀번호가 틀렸습니다.'   : '오류가 발생했습니다.'}
+                {submitMsg === 'success'    ? '공지가 등록되었습니다!'   :
+                 submitMsg === 'error-auth' ? '비밀번호가 틀렸습니다.'  : '오류가 발생했습니다.'}
               </p>
             )}
 
@@ -258,7 +375,7 @@ export default function AdminPage() {
                     </span>
                     {n.is_pinned && <span style={{ fontSize: 11, color: 'var(--blue)' }}>고정</span>}
                   </div>
-                  <p style={{ fontSize: 15, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>
+                  <p style={{ fontSize: 15, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {n.title}
                   </p>
                   <p style={{ fontSize: 12, color: 'var(--label-3)', marginTop: 2 }}>{formatDate(n.created_at)}</p>
